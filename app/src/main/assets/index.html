@@ -1,0 +1,3895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Football Match Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            margin-bottom: 10px;
+        }
+
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 10px 15px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #2c3e50;
+        }
+
+        .setup-mode {
+            padding: 30px;
+        }
+
+        .teams-setup {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .team-setup {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border: 3px solid;
+        }
+
+        .team-setup.yellow {
+            border-color: #f39c12;
+            background: linear-gradient(135deg, #fff9e6, #ffeaa7);
+        }
+
+        .team-setup.blue {
+            border-color: #3498db;
+            background: linear-gradient(135deg, #e6f3ff, #a7d8ff);
+        }
+
+        .team-setup h3 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .team-name-input {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .team-name-input input {
+            flex: 1;
+            padding: 15px;
+            border: 3px solid;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .team-name-input.yellow input {
+            border-color: #f39c12;
+            color: #f39c12;
+        }
+
+        .team-name-input.blue input {
+            border-color: #3498db;
+            color: #3498db;
+        }
+
+        .team-name-input input:focus {
+            outline: none;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .team-name-input input::placeholder {
+            color: #999;
+            font-weight: normal;
+        }
+
+        .player-input {
+            margin-bottom: 12px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .player-input input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+        }
+
+        .player-input label {
+            position: absolute;
+            left: 15px;
+            top: -8px;
+            background: white;
+            padding: 0 8px;
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .assign-sound-btn {
+            padding: 8px 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .assign-sound-btn:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .assign-sound-btn.has-sound {
+            background: #27ae60;
+        }
+
+        .assign-sound-btn.has-sound:hover {
+            background: #229954;
+        }
+
+        .add-player-btn {
+            width: 100%;
+            padding: 12px;
+            background: #9b59b6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .add-player-btn:hover {
+            background: #8e44ad;
+            transform: translateY(-2px);
+        }
+
+        .remove-player-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .player-input:hover .remove-player-btn {
+            display: block;
+        }
+
+        .own-goal-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .own-goal-label {
+            background: #e74c3c;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .start-game-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .start-game-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3);
+        }
+
+        .sample-btn {
+            width: 100%;
+            padding: 10px;
+            background: #9b59b6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .game-mode {
+            padding: 20px;
+        }
+
+        .score-board {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .team-score {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .team-score h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .score {
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .vs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .teams-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .team-players {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid;
+        }
+
+        .team-players.yellow {
+            border-color: #f39c12;
+            background: linear-gradient(135deg, #fff9e6, #ffeaa7);
+        }
+
+        .team-players.blue {
+            border-color: #3498db;
+            background: linear-gradient(135deg, #e6f3ff, #a7d8ff);
+        }
+
+        .team-players h4 {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            color: #2c3e50;
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .player-btn {
+            padding: 12px 8px;
+            border: 2px solid;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 14px;
+            background: white;
+        }
+
+        .player-btn.yellow {
+            border-color: #f39c12;
+            color: #f39c12;
+        }
+
+        .player-btn.blue {
+            border-color: #3498db;
+            color: #3498db;
+        }
+
+        .player-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .player-btn.yellow:hover {
+            background: #f39c12;
+            color: white;
+        }
+
+        .player-btn.blue:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .own-goal-btn {
+            background: #e74c3c !important;
+            color: white !important;
+            border-color: #e74c3c !important;
+        }
+
+        .game-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .control-btn.start {
+            background: #27ae60;
+            color: white;
+        }
+
+        .control-btn.stop {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .control-btn.undo {
+            background: #f39c12;
+            color: white;
+        }
+
+        .control-btn.reset {
+            background: #e67e22;
+            color: white;
+        }
+
+        .control-btn.reset:hover {
+            background: #d35400;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 126, 34, 0.4);
+        }
+
+        .control-btn.export {
+            background: #3498db;
+            color: white;
+        }
+
+        .custom-sound-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #ddd;
+            overflow: hidden; /* Added this line */
+            max-width: 100%; /* Added this line */
+            }
+
+        .custom-sound-buttons h4 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+
+        .custom-sound-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .rename-effects-btn {
+            padding: 8px 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .rename-effects-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .custom-sound-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .custom-sound-btn {
+            padding: 12px 8px;
+            border: 2px solid #9b59b6;
+            background: white;
+            color: #9b59b6;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 14px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .custom-sound-btn:hover {
+            background: #9b59b6;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(155, 89, 182, 0.3);
+        }
+
+        .custom-sound-btn.has-sound {
+            border-color: #27ae60;
+            color: #27ae60;
+        }
+
+        .custom-sound-btn.has-sound:hover {
+            background: #27ae60;
+            color: white;
+        }
+
+        .custom-sound-btn.empty {
+            border-style: dashed;
+            color: #999;
+            font-style: italic;
+        }
+
+        .custom-sound-btn.empty:hover {
+            background: #f0f0f0;
+            color: #666;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .action-log {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .action-log h4 {
+            margin-bottom: 15px;
+            text-align: center;
+            color: #ecf0f1;
+        }
+
+        .log-entry {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-entry.yellow {
+            border-left-color: #f39c12;
+        }
+
+        .log-entry.blue {
+            border-left-color: #3498db;
+        }
+
+        .log-entry.deleted {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        .log-entry-text {
+            flex: 1;
+        }
+
+        .log-entry-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .log-action-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .log-action-btn.edit {
+            background: #f39c12;
+            color: white;
+        }
+
+        .log-action-btn.edit:hover {
+            background: #e67e22;
+        }
+
+        .log-action-btn.delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .log-action-btn.delete:hover {
+            background: #c0392b;
+        }
+
+        .sounds-content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px;
+        }
+
+        .sounds-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .sounds-header h2 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .upload-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 3px dashed #ddd;
+            text-align: center;
+        }
+
+        .native-upload-btn {
+            width: 100%;
+            max-width: 300px;
+            padding: 15px;
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .native-upload-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .sound-management {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .management-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .management-btn.clear {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .management-btn.info {
+            background: #3498db;
+            color: white;
+        }
+
+        .management-btn.save {
+            background: #27ae60;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .assist-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .assist-btn {
+            padding: 10px;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .assist-btn:hover {
+            background: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .modal-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.confirm {
+            background: #27ae60;
+            color: white;
+        }
+
+        .modal-btn.cancel {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .upload-status {
+            color: #3498db;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #e3f2fd;
+            display: none;
+        }
+
+        .rename-effects-container {
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .rename-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .rename-input label {
+            flex: 0 0 100px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .rename-input input {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .rename-input .assign-sound-btn {
+            flex: 0 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .mode-toggle {
+                gap: 5px;
+            }
+
+            .mode-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .teams-setup {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .teams-container {
+                grid-template-columns: 1fr;
+            }
+
+            .score-board {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .vs {
+                order: -1;
+            }
+
+            .players-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+            }
+
+            .sounds-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .custom-sound-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @keyframes scoreAnimation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .rename-effects-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .rename-inputs {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .custom-sound-buttons {
+        justify-content: center;
+        max-width: 100%;
+    }
+
+    .custom-sound-buttons button {
+        min-width: 80px;
+        max-width: 120px;
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+        .score-animation {
+            animation: scoreAnimation 0.5s ease-in-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }/* Announcer Mode Styles */
+.announcer-content {
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    margin: 20px;
+}
+
+.announcer-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.announcer-header h2 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.announcer-header p {
+    color: #666;
+    font-size: 14px;
+}
+
+.announcer-rules {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    border: 2px solid #ddd;
+}
+
+.announcer-rules h3 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    text-align: center;
+}
+
+.rule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.rule-item:hover {
+    border-color: #3498db;
+    box-shadow: 0 2px 10px rgba(52, 152, 219, 0.1);
+}
+
+.rule-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.rule-icon {
+    font-size: 24px;
+    width: 40px;
+    text-align: center;
+}
+
+.rule-details {
+    flex: 1;
+}
+
+.rule-title {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 3px;
+}
+
+.rule-description {
+    font-size: 12px;
+    color: #666;
+}
+
+.rule-status {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.rule-status.assigned {
+    background: #d4edda;
+    color: #155724;
+}
+
+.rule-status.not-assigned {
+    background: #f8d7da;
+    color: #721c24;
+}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>⚽ Football Match Tracker</h1>
+        <div class="mode-toggle">
+            <button class="mode-btn active" onclick="switchMode('setup')">Setup Mode</button>
+            <button class="mode-btn" onclick="switchMode('game')">Game Mode</button>
+            <button class="mode-btn" onclick="switchMode('sounds')">🔊 Sounds</button>
+            <button class="mode-btn" onclick="switchMode('announcer')">📢 Announcer</button>        </div>
+    </div>
+
+    <!-- Setup Mode -->
+    <div id="setup-mode" class="tab-content active">
+        <div class="setup-mode">
+            <div class="teams-setup">
+                <div class="team-setup yellow">
+                    <h3>🟡 Yellow Team</h3>
+                    <div class="team-name-input yellow">
+                        <input type="text" id="yellow-team-name" placeholder="Enter team name (e.g., Żółci)" maxlength="25">
+                        <button class="assign-sound-btn" id="yellow-team-sound-btn" onclick="openSoundSelection('yellow-team')">🔊</button>
+                    </div>
+                    <div id="yellow-players">
+                        <!-- Initial 7 players will be generated by JavaScript -->
+                    </div>
+                    <button class="add-player-btn" id="add-yellow-player" onclick="addPlayerSlot('yellow')">
+                        ➕ Add Player
+                    </button>
+                    <div class="own-goal-container">
+                        <div class="own-goal-label">OWN GOAL</div>
+                        <button class="assign-sound-btn" id="yellow-own-goal-sound-btn" onclick="openSoundSelection('yellow-own-goal')">🔊</button>
+                    </div>
+                </div>
+
+                <div class="team-setup blue">
+                    <h3>🔵 Blue Team</h3>
+                    <div class="team-name-input blue">
+                        <input type="text" id="blue-team-name" placeholder="Enter team name (e.g., Niebiescy)" maxlength="25">
+                        <button class="assign-sound-btn" id="blue-team-sound-btn" onclick="openSoundSelection('blue-team')">🔊</button>
+                    </div>
+                    <div id="blue-players">
+                        <!-- Initial 7 players will be generated by JavaScript -->
+                    </div>
+                    <button class="add-player-btn" id="add-blue-player" onclick="addPlayerSlot('blue')">
+                        ➕ Add Player
+                    </button>
+                    <div class="own-goal-container">
+                        <div class="own-goal-label">OWN GOAL</div>
+                        <button class="assign-sound-btn" id="blue-own-goal-sound-btn" onclick="openSoundSelection('blue-own-goal')">🔊</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="sample-btn" onclick="loadSampleData()">📝 Load Sample Players</button>
+            <button class="start-game-btn" onclick="startGame()">🚀 Start Game</button>
+        </div>
+    </div>
+
+    <!-- Game Mode -->
+    <div id="game-mode" class="tab-content">
+        <div class="game-mode">
+            <div class="score-board">
+                <div class="team-score">
+                    <h3 id="yellow-team-header">🟡 Yellow Team</h3>
+                    <div class="score" id="yellow-score">0</div>
+                </div>
+                <div class="vs">VS</div>
+                <div class="team-score">
+                    <h3 id="blue-team-header">🔵 Blue Team</h3>
+                    <div class="score" id="blue-score">0</div>
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <button class="control-btn start" id="game-control-btn" onclick="toggleGame()">🎮 START GAME</button>
+                <button class="control-btn undo" onclick="undoLastAction()">↩️ UNDO</button>
+                <button class="control-btn reset" onclick="resetMatch()">🔄 RESET</button>
+                <button class="control-btn export" onclick="exportLog()">📄 EXPORT LOG</button>
+                <button class="control-btn" id="mute-btn" onclick="toggleMute()" style="background: #9b59b6; color: white;" title="Mute/Unmute goal sounds">🔊 SOUNDS</button>
+            </div>
+
+            <div class="teams-container">
+                <div class="team-players yellow">
+                    <h4 id="yellow-players-header">🟡 Yellow Team Players</h4>
+                    <div class="players-grid" id="yellow-players-game"></div>
+                </div>
+
+                <div class="team-players blue">
+                    <h4 id="blue-players-header">🔵 Blue Team Players</h4>
+                    <div class="players-grid" id="blue-players-game"></div>
+                </div>
+            </div>
+
+            <div class="custom-sound-buttons">
+                <div class="custom-sound-header">
+                    <h4>🔊 Custom Sound Buttons</h4>
+                    <button class="rename-effects-btn" onclick="toggleRenameEffects()">✏️ Rename & Assign Effects</button>
+                </div>
+                <div id="rename-effects-container" style="display: none;" class="rename-effects-container">
+                    <!-- Rename inputs will be generated here -->
+                </div>
+                <div class="custom-sound-row">
+                    <button class="custom-sound-btn empty" id="custom-sound-1" onclick="playCustomSound(1)">Set Name & Sound</button>
+                    <button class="custom-sound-btn empty" id="custom-sound-2" onclick="playCustomSound(2)">Set Name & Sound</button>
+                    <button class="custom-sound-btn empty" id="custom-sound-3" onclick="playCustomSound(3)">Set Name & Sound</button>
+                    <button class="custom-sound-btn empty" id="custom-sound-4" onclick="playCustomSound(4)">Set Name & Sound</button>
+                </div>
+                <div class="custom-sound-row">
+                    <button class="custom-sound-btn empty" id="custom-sound-5" onclick="playCustomSound(5)">Set Name & Sound</button>
+                    <button class="custom-sound-btn empty" id="custom-sound-6" onclick="playCustomSound(6)">Set Name & Sound</button>
+                    <button class="custom-sound-btn empty" id="custom-sound-7" onclick="playCustomSound(7)">Set Name & Sound</button>
+                    <button class="custom-sound-btn empty" id="custom-sound-8" onclick="playCustomSound(8)">Set Name & Sound</button>
+                </div>
+            </div>
+
+            <div class="action-log">
+                <h4>📝 Action Log</h4>
+                <div id="log-entries"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sounds Mode -->
+    <div id="sounds-mode" class="tab-content">
+        <div class="sounds-content">
+            <div class="sounds-header">
+                <h2>🔊 Sound Management</h2>
+                <p>Upload and assign custom sounds to teams and players</p>
+            </div>
+
+            <div class="upload-section">
+                <button onclick="openNativeSoundPicker()" class="native-upload-btn">
+                    Upload Sound from Device
+                </button>
+                <div id="upload-status" class="upload-status"></div>
+            </div>
+
+            <div class="sound-management">
+                <button onclick="saveAllSounds()" class="management-btn save">💾 Save All Sounds</button>
+                <button onclick="loadSavedSounds()" class="management-btn info">📂 Load Saved Sounds</button>
+                <button onclick="clearAllSounds()" class="management-btn clear">🗑️ Clear All</button>
+                <button onclick="showStorageInfo()" class="management-btn info">📊 Storage Info</button>
+            </div>
+
+            <div id="sound-list">
+                <div style="text-align: center; color: #666; padding: 40px;">
+                    <h3>No sounds uploaded yet</h3>
+                    <p>Click "Upload Sound from Device" to get started!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<!-- Announcer Mode -->
+<div id="announcer-mode" class="tab-content">
+    <div class="announcer-content">
+        <div class="announcer-header">
+            <h2>📢 Announcer Settings</h2>
+            <p>Configure special sounds for game events</p>
+        </div>
+
+        <div class="announcer-rules">
+            <h3>⚽ Event Sound Rules</h3>
+
+            <div class="rule-item">
+                <div class="rule-info">
+                    <span class="rule-icon">🏁</span>
+                    <div class="rule-details">
+                        <div class="rule-title">Start of the Game</div>
+                        <div class="rule-description">Plays when the game timer starts</div>
+                    </div>
+                </div>
+                <span class="rule-status not-assigned" id="announcer-game-start-status">Not Assigned</span>
+                <button class="assign-sound-btn" id="announcer-game-start-btn" onclick="openSoundSelection('announcer-game-start')">🔊 Assign</button>
+            </div>
+
+            <div class="rule-item">
+                <div class="rule-info">
+                    <span class="rule-icon">⚡</span>
+                    <div class="rule-details">
+                        <div class="rule-title">First Goal of the Game</div>
+                        <div class="rule-description">Plays before the first goal sound</div>
+                    </div>
+                </div>
+                <span class="rule-status not-assigned" id="announcer-first-goal-status">Not Assigned</span>
+                <button class="assign-sound-btn" id="announcer-first-goal-btn" onclick="openSoundSelection('announcer-first-goal')">🔊 Assign</button>
+            </div>
+
+            <div class="rule-item">
+                <div class="rule-info">
+                    <span class="rule-icon">🎩</span>
+                    <div class="rule-details">
+                        <div class="rule-title">Player Hat Trick</div>
+                        <div class="rule-description">When a player scores their third goal</div>
+                    </div>
+                </div>
+                <span class="rule-status not-assigned" id="announcer-hat-trick-status">Not Assigned</span>
+                <button class="assign-sound-btn" id="announcer-hat-trick-btn" onclick="openSoundSelection('announcer-hat-trick')">🔊 Assign</button>
+            </div>
+
+            <div class="rule-item">
+                <div class="rule-info">
+                    <span class="rule-icon">🌟</span>
+                    <div class="rule-details">
+                        <div class="rule-title">Player Scores 5 Goals</div>
+                        <div class="rule-description">When a player reaches five goals</div>
+                    </div>
+                </div>
+                <span class="rule-status not-assigned" id="announcer-five-goals-status">Not Assigned</span>
+                <button class="assign-sound-btn" id="announcer-five-goals-btn" onclick="openSoundSelection('announcer-five-goals')">🔊 Assign</button>
+            </div>
+
+            <div class="rule-item">
+                <div class="rule-info">
+                    <span class="rule-icon">🏆</span>
+                    <div class="rule-details">
+                        <div class="rule-title">End of the Match</div>
+                        <div class="rule-description">Plays when the game timer stops</div>
+                    </div>
+                </div>
+                <span class="rule-status not-assigned" id="announcer-game-end-status">Not Assigned</span>
+                <button class="assign-sound-btn" id="announcer-game-end-btn" onclick="openSoundSelection('announcer-game-end')">🔊 Assign</button>
+            </div>
+
+            <div class="rule-item">
+                <div class="rule-info">
+                    <span class="rule-icon">🤝</span>
+                    <div class="rule-details">
+                        <div class="rule-title">Game is Tied</div>
+                        <div class="rule-description">When both teams have the same score after a goal</div>
+                    </div>
+                </div>
+                <span class="rule-status not-assigned" id="announcer-tie-game-status">Not Assigned</span>
+                <button class="assign-sound-btn" id="announcer-tie-game-btn" onclick="openSoundSelection('announcer-tie-game')">🔊 Assign</button>
+            </div>
+
+            <div class="rule-item">
+                <div class="rule-info">
+                    <span class="rule-icon">🔥</span>
+                    <div class="rule-details">
+                        <div class="rule-title">3 Goal Lead</div>
+                        <div class="rule-description">When a team leads by 3 goals</div>
+                    </div>
+                </div>
+                <span class="rule-status not-assigned" id="announcer-three-lead-status">Not Assigned</span>
+                <button class="assign-sound-btn" id="announcer-three-lead-btn" onclick="openSoundSelection('announcer-three-lead')">🔊 Assign</button>
+            </div>
+
+            <div class="rule-item">
+                <div class="rule-info">
+                    <span class="rule-icon">💥</span>
+                    <div class="rule-details">
+                        <div class="rule-title">5 Goal Lead</div>
+                        <div class="rule-description">When a team leads by 5 goals</div>
+                    </div>
+                </div>
+                <span class="rule-status not-assigned" id="announcer-five-lead-status">Not Assigned</span>
+                <button class="assign-sound-btn" id="announcer-five-lead-btn" onclick="openSoundSelection('announcer-five-lead')">🔊 Assign</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Assist Modal -->
+<div id="assist-modal" class="modal">
+    <div class="modal-content">
+        <h3>🎯 Was there an assist?</h3>
+        <p>Goal by: <span id="goal-scorer"></span></p>
+        <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Click an assistant's name to confirm, or choose an option below:</p>
+        <div class="assist-buttons" id="assist-buttons"></div>
+        <div class="modal-controls">
+            <button class="modal-btn confirm" onclick="confirmGoal()">✅ No Assist</button>
+            <button class="modal-btn cancel" onclick="cancelGoal()">❌ Cancel Goal</button>
+        </div>
+    </div>
+</div>
+
+<!-- OWN GOAL Modal -->
+<div id="own-goal-modal" class="modal">
+    <div class="modal-content">
+        <h3>🔴 Own Goal Confirmation</h3>
+        <p>Own goal for: <span id="own-goal-team"></span></p>
+        <p style="font-size: 14px; color: #666; margin-bottom: 15px;">This will score a goal for the opposing team.</p>
+        <div class="modal-controls">
+            <button class="modal-btn confirm" onclick="confirmOwnGoal()">✅ Confirm Own Goal</button>
+            <button class="modal-btn cancel" onclick="cancelOwnGoal()">❌ Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Sound Selection Modal -->
+<div id="sound-selection-modal" class="modal">
+    <div class="modal-content">
+        <h3>🔊 Select Sound</h3>
+        <p id="sound-selection-target"></p>
+        <div id="sound-list-modal" style="margin: 20px 0;">
+            <!-- Sound options will be populated here -->
+        </div>
+        <div class="modal-controls">
+            <button class="modal-btn cancel" onclick="closeSoundSelection()">❌ Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Log Modal -->
+<div id="edit-log-modal" class="modal">
+    <div class="modal-content">
+        <h3>✏️ Edit Goal</h3>
+        <div style="margin: 20px 0; text-align: left;">
+            <label style="display: block; margin-bottom: 10px; font-weight: bold;">Goal Scorer:</label>
+            <select id="edit-goal-scorer" style="width: 100%; padding: 8px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 5px;">
+                <!-- Options will be populated -->
+            </select>
+
+            <label style="display: block; margin-bottom: 10px; font-weight: bold;">Assistant (optional):</label>
+            <select id="edit-assistant" style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 5px;">
+                <option value="">No Assist</option>
+                <!-- Options will be populated -->
+            </select>
+        </div>
+        <div class="modal-controls">
+            <button class="modal-btn confirm" onclick="saveEditedGoal()">✅ Save Changes</button>
+            <button class="modal-btn cancel" onclick="closeEditLog()">❌ Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Confirmation Modal -->
+<div id="reset-modal" class="modal">
+    <div class="modal-content">
+        <h3>🔄 RESET MATCH</h3>
+        <div style="text-align: left; margin: 20px 0;">
+            <p style="color: #e74c3c; font-weight: bold; margin-bottom: 15px;">⚠️ WARNING: This will permanently delete:</p>
+            <ul style="margin-left: 20px; margin-bottom: 15px;">
+                <li>All goals and assists</li>
+                <li>Complete action log</li>
+                <li>All player statistics</li>
+                <li>Current score (reset to 0-0)</li>
+            </ul>
+            <p style="color: #c0392b; font-weight: bold;">❌ This action CANNOT be undone!</p>
+        </div>
+        <div class="modal-controls">
+            <button class="modal-btn cancel" onclick="cancelReset()">❌ Cancel</button>
+            <button class="modal-btn confirm" style="background: #e74c3c;" onclick="confirmReset()">🔄 RESET MATCH</button>
+        </div>
+    </div>
+<div id="edit-log-modal" class="modal">
+    <div class="modal-content">
+        <h3>✏️ Edit Goal</h3>
+        <div style="margin: 20px 0; text-align: left;">
+            <label style="display: block; margin-bottom: 10px; font-weight: bold;">Goal Scorer:</label>
+            <select id="edit-goal-scorer" style="width: 100%; padding: 8px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 5px;">
+                <!-- Options will be populated -->
+            </select>
+
+            <label style="display: block; margin-bottom: 10px; font-weight: bold;">Assistant (optional):</label>
+            <select id="edit-assistant" style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 5px;">
+                <option value="">No Assist</option>
+                <!-- Options will be populated -->
+            </select>
+        </div>
+        <div class="modal-controls">
+            <button class="modal-btn confirm" onclick="saveEditedGoal()">✅ Save Changes</button>
+            <button class="modal-btn cancel" onclick="closeEditLog()">❌ Cancel</button>
+        </div>
+    </div>
+</div>
+<script>
+    // Global audio control variables
+    var currentAudio = null;
+    var isMuted = false;
+    var audioTimeout = null;
+    var currentSoundTarget = null;
+    var currentEditLogIndex = null;
+
+    var gameState = {
+        isGameStarted: false,
+        yellowScore: 0,
+        blueScore: 0,
+        yellowPlayers: [],
+        bluePlayers: [],
+        yellowPlayerSlots: {}, // Map player name to original slot number
+        bluePlayerSlots: {}, // Map player name to original slot number
+        yellowPlayerCount: 7,
+        bluePlayerCount: 7,
+        yellowTeamName: '',
+        blueTeamName: '',
+        actionLog: [],
+        currentGoal: null,
+        sounds: [],
+        soundAssignments: {},
+        playerStats: {},
+        totalGoalsScored: 0,
+        hasThreeGoalLead: false,
+        hasFiveGoalLead: false,
+        customSoundNames: {
+            1: 'Yellow Card',
+            2: 'Red Card',
+            3: 'Penalty',
+            4: 'Corner',
+            5: 'Free Kick',
+            6: 'Offside',
+            7: 'Foul',
+            8: 'Celebration'
+        }
+    };
+
+    function debugLog(message) {
+        console.log('[FootballTracker] ' + message);
+        if (window.AndroidInterface) {
+            window.AndroidInterface.logMessage(message);
+        }
+    }
+
+    function switchMode(mode) {
+        debugLog('Switching to mode: ' + mode);
+
+        var tabContents = document.querySelectorAll('.tab-content');
+        for (var i = 0; i < tabContents.length; i++) {
+            tabContents[i].classList.remove('active');
+        }
+
+        var modeButtons = document.querySelectorAll('.mode-btn');
+        for (var i = 0; i < modeButtons.length; i++) {
+            modeButtons[i].classList.remove('active');
+        }
+
+        var selectedTab = document.getElementById(mode + '-mode');
+        if (selectedTab) {
+            selectedTab.classList.add('active');
+        }
+
+        var buttons = document.querySelectorAll('.mode-btn');
+        if (mode === 'setup') {
+            buttons[0].classList.add('active');
+            // Update all sound assignment buttons
+            updateAllSoundAssignmentButtons();
+        } else if (mode === 'game') {
+            buttons[1].classList.add('active');
+        } else if (mode === 'sounds') {
+            buttons[2].classList.add('active');
+            updateSoundsStats();
+            // Display all sounds when switching to sounds mode
+            displayAllSounds();
+        } else if (mode === 'announcer') {
+              buttons[3].classList.add('active');
+              updateAnnouncerButtons();
+        }
+    }
+
+    function updateAllSoundAssignmentButtons() {
+        // Update team buttons
+        updateSoundAssignmentButton('yellow-team');
+        updateSoundAssignmentButton('blue-team');
+
+        // Update own goal buttons
+        updateSoundAssignmentButton('yellow-own-goal');
+        updateSoundAssignmentButton('blue-own-goal');
+
+        // Update all player buttons
+        for (var i = 1; i <= gameState.yellowPlayerCount; i++) {
+            updateSoundAssignmentButton('yellow-player-' + i);
+        }
+        for (var i = 1; i <= gameState.bluePlayerCount; i++) {
+            updateSoundAssignmentButton('blue-player-' + i);
+        }
+
+        // Update custom sound buttons
+        for (var i = 1; i <= 8; i++) {
+            updateSoundAssignmentButton('custom-sound-' + i);
+        } updateAnnouncerButtons();
+    }
+
+    function initializePlayerSlots() {
+        debugLog('Initializing player slots');
+
+        // Initialize Yellow team slots (default 7 players)
+        var yellowContainer = document.getElementById('yellow-players');
+        yellowContainer.innerHTML = '';
+        for (var i = 1; i <= 7; i++) {
+            addPlayerSlotElement('yellow', i);
+        }
+
+        // Initialize Blue team slots (default 7 players)
+        var blueContainer = document.getElementById('blue-players');
+        blueContainer.innerHTML = '';
+        for (var i = 1; i <= 7; i++) {
+            addPlayerSlotElement('blue', i);
+        }
+
+        gameState.yellowPlayerCount = 7;
+        gameState.bluePlayerCount = 7;
+
+        // Update team and own goal sound buttons
+        updateSoundAssignmentButton('yellow-team');
+        updateSoundAssignmentButton('blue-team');
+        updateSoundAssignmentButton('yellow-own-goal');
+        updateSoundAssignmentButton('blue-own-goal');
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        var assistModal = document.getElementById('assist-modal');
+        var ownGoalModal = document.getElementById('own-goal-modal');
+        var soundSelectionModal = document.getElementById('sound-selection-modal');
+        var editLogModal = document.getElementById('edit-log-modal');
+        var resetModal = document.getElementById('reset-modal');
+
+        if (event.target === assistModal) {
+            cancelGoal();
+        } else if (event.target === ownGoalModal) {
+            cancelOwnGoal();
+        } else if (event.target === soundSelectionModal) {
+            closeSoundSelection();
+        } else if (event.target === editLogModal) {
+            closeEditLog();
+        } else if (event.target === resetModal) {
+            cancelReset();
+        }
+    }
+
+    function generateMatchReport() {
+        var timestamp = new Date();
+        var report = '⚽ FOOTBALL MATCH REPORT\n';
+        report += '==================================================\n\n';
+        report += 'Date: ' + timestamp.toLocaleDateString() + '\n';
+        report += 'Time: ' + timestamp.toLocaleTimeString() + '\n\n';
+
+        report += 'FINAL SCORE\n';
+        report += '--------------------\n';
+        report += '🟡 ' + gameState.yellowTeamName + ': ' + gameState.yellowScore + '\n';
+        report += '🔵 ' + gameState.blueTeamName + ': ' + gameState.blueScore + '\n\n';
+
+        report += 'TEAM ROSTERS\n';
+        report += '--------------------\n';
+        var yellowPlayers = [];
+        for (var i = 0; i < gameState.yellowPlayers.length; i++) {
+            if (gameState.yellowPlayers[i] !== 'OWN GOAL') {
+                yellowPlayers.push(gameState.yellowPlayers[i]);
+            }
+        }
+        var bluePlayers = [];
+        for (var i = 0; i < gameState.bluePlayers.length; i++) {
+            if (gameState.bluePlayers[i] !== 'OWN GOAL') {
+                bluePlayers.push(gameState.bluePlayers[i]);
+            }
+        }
+        report += '🟡 ' + gameState.yellowTeamName + ' (' + yellowPlayers.length + ' players): ' + yellowPlayers.join(', ') + '\n';
+        report += '🔵 ' + gameState.blueTeamName + ' (' + bluePlayers.length + ' players): ' + bluePlayers.join(', ') + '\n\n';
+
+        var allPlayerStats = getAllPlayerStats();
+        if (allPlayerStats.length > 0) {
+            report += 'PLAYER STATISTICS\n';
+            report += '--------------------\n';
+            for (var i = 0; i < allPlayerStats.length; i++) {
+                var player = allPlayerStats[i];
+                var teamName = player.team === 'yellow' ? gameState.yellowTeamName : gameState.blueTeamName;
+                var teamEmoji = player.team === 'yellow' ? '🟡' : '🔵';
+
+                var statsText = '';
+                if (player.goals > 0 && player.assists > 0) {
+                    statsText = player.goals + ' goal' + (player.goals !== 1 ? 's' : '') + ', ' + player.assists + ' assist' + (player.assists !== 1 ? 's' : '');
+                } else if (player.goals > 0) {
+                    statsText = player.goals + ' goal' + (player.goals !== 1 ? 's' : '');
+                } else if (player.assists > 0) {
+                    statsText = player.assists + ' assist' + (player.assists !== 1 ? 's' : '');
+                }
+
+                if (statsText) {
+                    report += (i + 1) + '. ' + player.name + ' (' + teamEmoji + ' ' + teamName + ') - ' + statsText + '\n';
+                }
+            }
+            report += '\n';
+        }
+
+        report += 'MATCH EVENTS\n';
+        report += '--------------------\n';
+        var eventNum = 1;
+        for (var i = 0; i < gameState.actionLog.length; i++) {
+            var action = gameState.actionLog[i];
+            var time = action.timestamp ? action.timestamp.toLocaleTimeString() : 'Unknown time';
+            report += eventNum + '. [' + time + '] ' + action.text + '\n';
+            eventNum++;
+        }
+
+        report += '\n==================================================\n';
+        report += 'Report generated by Football Match Tracker\n';
+
+        return report;
+    }
+
+    // Functions for editing and deleting log entries
+    function editLogEntry(index) {
+        var entry = gameState.actionLog[index];
+        if (!entry || entry.type !== 'goal') return;
+
+        currentEditLogIndex = index;
+
+        // Populate scorer dropdown
+        var scorerSelect = document.getElementById('edit-goal-scorer');
+        scorerSelect.innerHTML = '';
+
+        var teamPlayers = entry.team === 'yellow' ? gameState.yellowPlayers : gameState.bluePlayers;
+        for (var i = 0; i < teamPlayers.length; i++) {
+            if (teamPlayers[i] !== 'OWN GOAL') {
+                var option = document.createElement('option');
+                option.value = teamPlayers[i];
+                option.textContent = teamPlayers[i];
+                if (teamPlayers[i] === entry.player) {
+                    option.selected = true;
+                }
+                scorerSelect.appendChild(option);
+            }
+        }
+
+        // Populate assistant dropdown
+        var assistSelect = document.getElementById('edit-assistant');
+        assistSelect.innerHTML = '<option value="">No Assist</option>';
+
+        for (var i = 0; i < teamPlayers.length; i++) {
+            if (teamPlayers[i] !== 'OWN GOAL') {
+                var option = document.createElement('option');
+                option.value = teamPlayers[i];
+                option.textContent = teamPlayers[i];
+                if (teamPlayers[i] === entry.assist) {
+                    option.selected = true;
+                }
+                assistSelect.appendChild(option);
+            }
+        }
+
+        document.getElementById('edit-log-modal').style.display = 'block';
+    }
+
+    function saveEditedGoal() {
+        if (currentEditLogIndex === null) return;
+
+        var entry = gameState.actionLog[currentEditLogIndex];
+        var newScorer = document.getElementById('edit-goal-scorer').value;
+        var newAssist = document.getElementById('edit-assistant').value;
+
+        // Update player stats - remove old stats
+        if (entry.player !== 'OWN GOAL') {
+            var oldPlayerKey = entry.team + '-' + entry.player;
+            if (gameState.playerStats[oldPlayerKey]) {
+                gameState.playerStats[oldPlayerKey].goals = Math.max(0, gameState.playerStats[oldPlayerKey].goals - 1);
+            }
+        }
+
+        if (entry.assist) {
+            var oldAssistKey = entry.team + '-' + entry.assist;
+            if (gameState.playerStats[oldAssistKey]) {
+                gameState.playerStats[oldAssistKey].assists = Math.max(0, gameState.playerStats[oldAssistKey].assists - 1);
+            }
+        }
+
+        // Update entry
+        entry.player = newScorer;
+        entry.assist = newAssist || null;
+
+        // Update log text
+        var logText = 'Goal: ' + entry.player;
+        if (entry.assist) {
+            logText += ', Assist: ' + entry.assist;
+        }
+        logText += ' (' + (entry.team === 'yellow' ? gameState.yellowTeamName : gameState.blueTeamName) + ')';
+        entry.text = logText;
+
+        // Add new stats
+        updatePlayerStats(entry);
+
+        // Update UI
+        var logEntry = document.querySelector('[data-log-index="' + currentEditLogIndex + '"]');
+        if (logEntry) {
+            var textSpan = logEntry.querySelector('.log-entry-text');
+            if (textSpan) {
+                textSpan.textContent = logText;
+            }
+        }
+
+        closeEditLog();
+
+        if (window.AndroidInterface) {
+            window.AndroidInterface.showToast('✅ Goal updated successfully');
+        }
+    }
+
+    function closeEditLog() {
+        document.getElementById('edit-log-modal').style.display = 'none';
+        currentEditLogIndex = null;
+    }
+
+    function deleteLogEntry(index) {
+    var entry = gameState.actionLog[index];
+    if (!entry) return;
+
+    var confirmMsg = '🗑️ Delete this entry?\n\n' + entry.text + '\n\nThis will remove the entry and update the score and statistics.';
+
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+
+    // Update score and stats if it was a goal
+    if (entry.type === 'goal') {
+        if (entry.team === 'yellow') {
+            gameState.yellowScore = Math.max(0, gameState.yellowScore - 1);
+            document.getElementById('yellow-score').textContent = gameState.yellowScore;
+        } else {
+            gameState.blueScore = Math.max(0, gameState.blueScore - 1);
+            document.getElementById('blue-score').textContent = gameState.blueScore;
+        }
+
+        // Update player stats
+        if (entry.player !== 'OWN GOAL') {
+            var playerKey = entry.team + '-' + entry.player;
+            if (gameState.playerStats[playerKey]) {
+                gameState.playerStats[playerKey].goals = Math.max(0, gameState.playerStats[playerKey].goals - 1);
+            }
+        }
+
+        if (entry.assist) {
+            var assistKey = entry.team + '-' + entry.assist;
+            if (gameState.playerStats[assistKey]) {
+                gameState.playerStats[assistKey].assists = Math.max(0, gameState.playerStats[assistKey].assists - 1);
+            }
+        }
+
+        // Update announcer state for regular goal
+        gameState.totalGoalsScored = Math.max(0, gameState.totalGoalsScored - 1);
+
+    } else if (entry.type === 'own-goal') {
+        if (entry.scoringTeam === 'yellow') {
+            gameState.yellowScore = Math.max(0, gameState.yellowScore - 1);
+            document.getElementById('yellow-score').textContent = gameState.yellowScore;
+        } else {
+            gameState.blueScore = Math.max(0, gameState.blueScore - 1);
+            document.getElementById('blue-score').textContent = gameState.blueScore;
+        }
+
+        // Update announcer state for own goal
+        gameState.totalGoalsScored = Math.max(0, gameState.totalGoalsScored - 1);
+    }
+
+    // Recalculate lead flags after score changes
+    var scoreDiff = Math.abs(gameState.yellowScore - gameState.blueScore);
+    if (scoreDiff < 3) {
+        gameState.hasThreeGoalLead = false;
+    }
+    if (scoreDiff < 5) {
+        gameState.hasFiveGoalLead = false;
+    }
+
+    // Remove the entry from the log array
+    gameState.actionLog.splice(index, 1);
+
+    // Remove the corresponding DOM element
+    var logEntry = document.querySelector('[data-log-index="' + index + '"]');
+    if (logEntry) {
+        logEntry.remove();
+    }
+
+    // Update all remaining log entry indices
+    updateLogEntryIndices();
+
+    if (window.AndroidInterface) {
+        window.AndroidInterface.showToast('🗑️ Entry deleted successfully');
+    }
+
+    debugLog('Entry deleted: ' + entry.text);
+}
+
+    function toggleGame() {
+        var btn = document.getElementById('game-control-btn');
+
+        if (!gameState.isGameStarted) {
+            gameState.isGameStarted = true;
+            btn.textContent = '⏹️ STOP GAME';
+            btn.className = 'control-btn stop';
+
+            var startEntry = {
+                type: 'system',
+                text: '🎮 Game Started',
+                timestamp: new Date()
+            };
+            var logIndex = gameState.actionLog.length;
+            gameState.actionLog.push(startEntry);
+
+            var logContainer = document.getElementById('log-entries');
+            var logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.setAttribute('data-log-index', logIndex);
+            logEntry.innerHTML = '<span class="log-entry-text">' + startEntry.text + '</span>';
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            // Play start of game announcer sound
+            playAnnouncerSound('announcer-game-start', function() {
+                debugLog('Game start announcer completed');
+            });
+
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast('⚽ Game Started!');
+            }
+        } else {
+            gameState.isGameStarted = false;
+            btn.textContent = '🎮 START GAME';
+            btn.className = 'control-btn start';
+
+            var stopEntry = {
+                type: 'system',
+                text: '⏹️ Game Stopped',
+                timestamp: new Date()
+            };
+            var logIndex = gameState.actionLog.length;
+            gameState.actionLog.push(stopEntry);
+
+            var logContainer = document.getElementById('log-entries');
+            var logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.setAttribute('data-log-index', logIndex);
+            logEntry.innerHTML = '<span class="log-entry-text">' + stopEntry.text + '</span>';
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            // Play end of match announcer sound
+            playAnnouncerSound('announcer-game-end', function() {
+                debugLog('Game end announcer completed');
+            });
+
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast('⏹️ Game Stopped');
+            }
+        }
+    }
+
+    function confirmOwnGoal() {
+        if (!gameState.currentGoal) return;
+
+        var goal = gameState.currentGoal;
+
+        // Own goal scores for the SAME team (the team whose button was clicked)
+        var scoringTeam = goal.team; // Changed from opposite team to same team
+
+        if (scoringTeam === 'yellow') {
+            gameState.yellowScore++;
+            document.getElementById('yellow-score').textContent = gameState.yellowScore;
+            document.getElementById('yellow-score').classList.add('score-animation');
+            setTimeout(function() {
+                document.getElementById('yellow-score').classList.remove('score-animation');
+            }, 500);
+        } else {
+            gameState.blueScore++;
+            document.getElementById('blue-score').textContent = gameState.blueScore;
+            document.getElementById('blue-score').classList.add('score-animation');
+            setTimeout(function() {
+                document.getElementById('blue-score').classList.remove('score-animation');
+            }, 500);
+        }
+
+        var logText = 'Own Goal by ' + (goal.team === 'yellow' ? gameState.yellowTeamName : gameState.blueTeamName) + ' (Goal for ' + (scoringTeam === 'yellow' ? gameState.yellowTeamName : gameState.blueTeamName) + ')';
+
+        var logIndex = gameState.actionLog.length;
+        gameState.actionLog.push({
+            type: 'own-goal',
+            team: goal.team,
+            scoringTeam: scoringTeam,
+            player: 'OWN GOAL',
+            timestamp: goal.timestamp,
+            text: logText
+        });
+
+        var logContainer = document.getElementById('log-entries');
+        var logEntry = document.createElement('div');
+        logEntry.className = 'log-entry ' + scoringTeam;
+        logEntry.setAttribute('data-log-index', logIndex);
+        logEntry.innerHTML = '<span class="log-entry-text">' + logText + '</span>' +
+            '<div class="log-entry-actions">' +
+            '<button class="log-action-btn delete" onclick="deleteLogEntry(' + logIndex + ')">❌</button>' +
+            '</div>';
+        logContainer.appendChild(logEntry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+        // Check for announcer events BEFORE updating score
+        var isFirstGoal = gameState.totalGoalsScored === 0;
+
+        // Increment total goals
+        gameState.totalGoalsScored++;
+
+        // After hiding the modal and before debugLog, add:
+
+        // Determine which announcer sounds to play
+        var announcerSounds = [];
+
+        // First goal of the game
+        if (isFirstGoal) {
+            announcerSounds.push('announcer-first-goal');
+        }
+
+        // Check for tie game
+        if (gameState.yellowScore === gameState.blueScore) {
+            announcerSounds.push('announcer-tie-game');
+        }
+
+        // Check for 3 goal lead
+        var scoreDiff = Math.abs(gameState.yellowScore - gameState.blueScore);
+        if (scoreDiff === 3 && !gameState.hasThreeGoalLead) {
+            gameState.hasThreeGoalLead = true;
+            announcerSounds.push('announcer-three-lead');
+        }
+
+        // Check for 5 goal lead
+        if (scoreDiff === 5 && !gameState.hasFiveGoalLead) {
+            gameState.hasFiveGoalLead = true;
+            announcerSounds.push('announcer-five-lead');
+        }
+
+        // Reset lead flags if lead is lost
+        if (scoreDiff < 3) {
+            gameState.hasThreeGoalLead = false;
+        }
+        if (scoreDiff < 5) {
+            gameState.hasFiveGoalLead = false;
+        }
+
+        // Play announcer sounds in sequence, then goal sound
+        playAnnouncerSoundsSequence(announcerSounds, function() {
+            // After all announcer sounds, play the own goal sound
+            playGoalSound(goal.team, 'OWN GOAL');
+        });
+        document.getElementById('own-goal-modal').style.display = 'none';
+        gameState.currentGoal = null;
+
+        debugLog('Own goal confirmed: ' + logText);
+    }
+
+   function confirmGoal() {
+    if (!gameState.currentGoal) return;
+
+    var goal = gameState.currentGoal;
+
+    // Check for announcer events BEFORE updating score
+    var previousYellowScore = gameState.yellowScore;
+    var previousBlueScore = gameState.blueScore;
+    var isFirstGoal = gameState.totalGoalsScored === 0;
+
+    // Get player's current goals before update
+    var playerKey = goal.team + '-' + goal.player;
+    var playerGoalsBefore = 0;
+    if (gameState.playerStats[playerKey]) {
+        playerGoalsBefore = gameState.playerStats[playerKey].goals;
+    }
+
+    // Update score
+    if (goal.team === 'yellow') {
+        gameState.yellowScore++;
+        document.getElementById('yellow-score').textContent = gameState.yellowScore;
+        document.getElementById('yellow-score').classList.add('score-animation');
+        setTimeout(function() {
+            document.getElementById('yellow-score').classList.remove('score-animation');
+        }, 500);
+    } else {
+        gameState.blueScore++;
+        document.getElementById('blue-score').textContent = gameState.blueScore;
+        document.getElementById('blue-score').classList.add('score-animation');
+        setTimeout(function() {
+            document.getElementById('blue-score').classList.remove('score-animation');
+        }, 500);
+    }
+
+    gameState.totalGoalsScored++;
+    updatePlayerStats(goal);
+
+    var logText = 'Goal: ' + goal.player;
+    if (goal.assist) {
+        logText += ', Assist: ' + goal.assist;
+    }
+    logText += ' (' + (goal.team === 'yellow' ? gameState.yellowTeamName : gameState.blueTeamName) + ')';
+
+    var logIndex = gameState.actionLog.length;
+    gameState.actionLog.push({
+        type: 'goal',
+        team: goal.team,
+        player: goal.player,
+        assist: goal.assist || null,
+        timestamp: goal.timestamp,
+        text: logText
+    });
+
+    var logContainer = document.getElementById('log-entries');
+    var logEntry = document.createElement('div');
+    logEntry.className = 'log-entry ' + goal.team;
+    logEntry.setAttribute('data-log-index', logIndex);
+    logEntry.innerHTML = '<span class="log-entry-text">' + logText + '</span>' +
+        '<div class="log-entry-actions">' +
+        '<button class="log-action-btn edit" onclick="editLogEntry(' + logIndex + ')">✏️</button>' +
+        '<button class="log-action-btn delete" onclick="deleteLogEntry(' + logIndex + ')">❌</button>' +
+        '</div>';
+    logContainer.appendChild(logEntry);
+    logContainer.scrollTop = logContainer.scrollHeight;
+
+    document.getElementById('assist-modal').style.display = 'none';
+
+    // Determine which announcer sounds to play
+    var announcerSounds = [];
+
+    // First goal of the game
+    if (isFirstGoal) {
+        announcerSounds.push('announcer-first-goal');
+    }
+
+    // Hat trick (3 goals)
+    if (playerGoalsBefore === 2) {
+        announcerSounds.push('announcer-hat-trick');
+    }
+
+    // 5 goals
+    if (playerGoalsBefore === 4) {
+        announcerSounds.push('announcer-five-goals');
+    }
+
+    // Check for tie game
+    if (gameState.yellowScore === gameState.blueScore) {
+        announcerSounds.push('announcer-tie-game');
+    }
+
+    // Check for 3 goal lead
+    var scoreDiff = Math.abs(gameState.yellowScore - gameState.blueScore);
+    if (scoreDiff === 3 && !gameState.hasThreeGoalLead) {
+        gameState.hasThreeGoalLead = true;
+        announcerSounds.push('announcer-three-lead');
+    }
+
+    // Check for 5 goal lead
+    if (scoreDiff === 5 && !gameState.hasFiveGoalLead) {
+        gameState.hasFiveGoalLead = true;
+        announcerSounds.push('announcer-five-lead');
+    }
+
+    // Reset lead flags if lead is lost
+    if (scoreDiff < 3) {
+        gameState.hasThreeGoalLead = false;
+    }
+    if (scoreDiff < 5) {
+        gameState.hasFiveGoalLead = false;
+    }
+
+    // Play announcer sounds in sequence, then goal sound
+    playAnnouncerSoundsSequence(announcerSounds, function() {
+        // After all announcer sounds, play the goal sound
+        playGoalSound(goal.team, goal.player);
+    });
+
+    gameState.currentGoal = null;
+    debugLog('Goal confirmed: ' + logText);
+}
+
+    // Function to display sound item without assignment dropdown
+    function displaySoundItem(sound) {
+        var soundList = document.getElementById('sound-list');
+
+        // Remove "no sounds" message if it exists
+        var noSoundsMsg = soundList.querySelector('div[style*="text-align: center"]');
+        if (noSoundsMsg) {
+            noSoundsMsg.remove();
+        }
+
+        var soundItem = document.createElement('div');
+        soundItem.className = 'sound-item';
+        soundItem.setAttribute('data-sound-id', sound.id);
+        soundItem.style.cssText = 'background: white; padding: 20px; border-radius: 10px; border: 2px solid #ddd; margin-bottom: 15px; transition: all 0.3s ease;';
+
+        var uploadDate = sound.uploadDate ?
+            new Date(sound.uploadDate).toLocaleDateString() : 'Unknown';
+
+        // Create the HTML structure
+        soundItem.innerHTML = '<h5 style="margin-bottom: 15px; color: #2c3e50; font-size: 16px; display: flex; align-items: center; justify-content: space-between;">🎵 ' + sound.name + ' <span style="font-size: 11px; color: #666;">(' + (sound.size/1024).toFixed(1) + 'KB • ' + uploadDate + ')</span></h5><audio controls preload="metadata" style="width: 100%; margin-bottom: 15px;"><source src="' + sound.data + '" type="' + sound.type + '">Your browser does not support the audio element.</audio><div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"><button id="remove-btn-' + sound.id + '" style="padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; background: #e74c3c; color: white;">🗑️ Remove</button></div>';
+
+        soundList.appendChild(soundItem);
+
+        // Add event listener to the remove button AFTER it's added to DOM
+        var removeBtn = document.getElementById('remove-btn-' + sound.id);
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                debugLog('Remove button clicked for sound: ' + sound.name);
+                removeSound(sound.id);
+            });
+        } else {
+            debugLog('ERROR: Remove button not found for sound: ' + sound.name);
+        }
+    }
+
+    // New function to generate rename inputs with sound assignment
+    function generateRenameInputs() {
+        var container = document.getElementById('rename-effects-container');
+        container.innerHTML = '';
+
+        for (var i = 1; i <= 8; i++) {
+            var div = document.createElement('div');
+            div.className = 'rename-input';
+
+            var soundKey = 'custom-sound-' + i;
+            var hasSound = gameState.soundAssignments[soundKey] ? true : false;
+
+            div.innerHTML = '<label>Effect ' + i + ':</label>' +
+                '<input type="text" id="rename-effect-' + i + '" value="' + gameState.customSoundNames[i] + '" maxlength="20">' +
+                '<button class="assign-sound-btn' + (hasSound ? ' has-sound' : '') + '" id="effect-sound-btn-' + i + '" onclick="openSoundSelection(\'custom-sound-' + i + '\')">🔊</button>';
+            container.appendChild(div);
+        }
+
+        var saveBtn = document.createElement('button');
+        saveBtn.className = 'management-btn save';
+        saveBtn.style.marginTop = '15px';
+        saveBtn.textContent = '💾 Save Names';
+        saveBtn.onclick = saveEffectNames;
+        container.appendChild(saveBtn);
+    }
+
+    function addPlayerSlotElement(team, playerNum) {
+        var container = document.getElementById(team + '-players');
+        var playerDiv = document.createElement('div');
+        playerDiv.className = 'player-input';
+        playerDiv.setAttribute('data-player-num', playerNum);
+
+        var isOptional = playerNum > 5;
+        var placeholder = isOptional ? 'Enter player name (optional)' : 'Enter player name';
+
+        var assignBtnId = team + '-player-sound-' + playerNum;
+        var hasSound = false;
+        var soundKey = team + '-player-' + playerNum;
+        if (gameState.soundAssignments && gameState.soundAssignments[soundKey]) {
+            hasSound = true;
+        }
+
+        playerDiv.innerHTML =
+            '<label>Player ' + playerNum + '</label>' +
+            '<input type="text" id="' + team + '-player-' + playerNum + '" placeholder="' + placeholder + '" onchange="updatePlayerSoundKey(\'' + team + '\', ' + playerNum + ')">' +
+            '<button class="assign-sound-btn' + (hasSound ? ' has-sound' : '') + '" id="' + assignBtnId + '" onclick="openSoundSelection(\'' + team + '-player-' + playerNum + '\')">🔊</button>' +
+            (playerNum > 7 ? '<button class="remove-player-btn" onclick="removePlayerSlot(\'' + team + '\', ' + playerNum + ')" title="Remove player">×</button>' : '');
+
+        container.appendChild(playerDiv);
+    }
+
+    function addPlayerSlot(team) {
+        var currentCount = team === 'yellow' ? gameState.yellowPlayerCount : gameState.bluePlayerCount;
+
+        if (currentCount >= 18) {
+            var message = 'Maximum 18 players per team allowed!';
+            alert(message);
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast(message);
+            }
+            return;
+        }
+
+        var newPlayerNum = currentCount + 1;
+        addPlayerSlotElement(team, newPlayerNum);
+
+        if (team === 'yellow') {
+            gameState.yellowPlayerCount = newPlayerNum;
+            if (newPlayerNum >= 18) {
+                document.getElementById('add-yellow-player').style.display = 'none';
+            }
+        } else {
+            gameState.bluePlayerCount = newPlayerNum;
+            if (newPlayerNum >= 18) {
+                document.getElementById('add-blue-player').style.display = 'none';
+            }
+        }
+
+        debugLog('Added player slot ' + newPlayerNum + ' for ' + team + ' team');
+    }
+
+    function removePlayerSlot(team, playerNum) {
+        var playerDiv = document.querySelector('[data-player-num="' + playerNum + '"]');
+        if (playerDiv) {
+            playerDiv.remove();
+        }
+
+        // Show add button again if it was hidden
+        if (team === 'yellow') {
+            document.getElementById('add-yellow-player').style.display = 'block';
+            gameState.yellowPlayerCount--;
+        } else {
+            document.getElementById('add-blue-player').style.display = 'block';
+            gameState.bluePlayerCount--;
+        }
+
+        debugLog('Removed player slot ' + playerNum + ' for ' + team + ' team');
+    }
+
+    function updateSoundsStats() {
+        var totalSounds = gameState.sounds.length;
+        var assignedSounds = 0;
+        for (var i = 0; i < gameState.sounds.length; i++) {
+            if (gameState.sounds[i].assigned) {
+                assignedSounds++;
+            }
+        }
+        var totalSize = 0;
+        for (var i = 0; i < gameState.sounds.length; i++) {
+            totalSize += gameState.sounds[i].size || 0;
+        }
+        var sizeMB = (totalSize / 1024 / 1024).toFixed(2);
+
+        // These elements were removed from the UI, so we don't need to update them
+        debugLog('Stats updated - Total: ' + totalSounds + ', Assigned: ' + assignedSounds + ', Size: ' + sizeMB + 'MB');
+    }
+
+    function loadSampleData() {
+        debugLog('Loading sample data');
+        var sampleYellowPlayers = ['Krystian G. (GK)', 'Tomek Ł.', 'Przemek W.', 'Andrzej T.', 'Piotrek P.', 'Michał G.'];
+        var sampleBluePlayers = ['Paweł L. (GK)', 'Marcin P.', 'Łukasz J.', 'Oskar B.', 'Bartek D.', 'Dominik D.'];
+
+        // Load sample team names
+        document.getElementById('yellow-team-name').value = 'Yellow Team';
+        document.getElementById('blue-team-name').value = 'Blue Team';
+
+        for (var i = 0; i < sampleYellowPlayers.length; i++) {
+            var input = document.getElementById('yellow-player-' + (i + 1));
+            if (input && !input.value) {
+                input.value = sampleYellowPlayers[i];
+            }
+        }
+
+        for (var i = 0; i < sampleBluePlayers.length; i++) {
+            var input = document.getElementById('blue-player-' + (i + 1));
+            if (input && !input.value) {
+                input.value = sampleBluePlayers[i];
+            }
+        }
+
+        if (window.AndroidInterface) {
+            window.AndroidInterface.showToast('Sample data loaded!');
+        }
+    }
+
+    function startGame() {
+        debugLog('Starting game...');
+
+        try {
+            gameState.yellowPlayers = [];
+            gameState.bluePlayers = [];
+            gameState.yellowPlayerSlots = {}; // Map player name to original slot number
+            gameState.bluePlayerSlots = {}; // Map player name to original slot number
+            gameState.totalGoalsScored = 0;
+            gameState.hasThreeGoalLead = false;
+            gameState.hasFiveGoalLead = false;
+            // Get team names
+            gameState.yellowTeamName = document.getElementById('yellow-team-name').value.trim() || 'Yellow Team';
+            gameState.blueTeamName = document.getElementById('blue-team-name').value.trim() || 'Blue Team';
+
+            // Collect all yellow players with their slot numbers
+            for (var i = 1; i <= gameState.yellowPlayerCount; i++) {
+                var input = document.getElementById('yellow-player-' + i);
+                if (input && input.value.trim()) {
+                    var playerName = input.value.trim();
+                    gameState.yellowPlayers.push(playerName);
+                    gameState.yellowPlayerSlots[playerName] = i; // Store original slot number
+                }
+            }
+
+            // Collect all blue players with their slot numbers
+            for (var i = 1; i <= gameState.bluePlayerCount; i++) {
+                var input = document.getElementById('blue-player-' + i);
+                if (input && input.value.trim()) {
+                    var playerName = input.value.trim();
+                    gameState.bluePlayers.push(playerName);
+                    gameState.bluePlayerSlots[playerName] = i; // Store original slot number
+                }
+            }
+
+            debugLog('Yellow players: ' + gameState.yellowPlayers.length + ', Blue players: ' + gameState.bluePlayers.length);
+
+            if (gameState.yellowPlayers.length < 5 || gameState.bluePlayers.length < 5) {
+                var message = 'Each team must have at least 5 players!';
+                alert(message);
+                if (window.AndroidInterface) {
+                    window.AndroidInterface.showToast(message);
+                }
+                return;
+            }
+
+            // Add OWN GOAL as a selectable option
+            gameState.yellowPlayers.push('OWN GOAL');
+            gameState.bluePlayers.push('OWN GOAL');
+
+            gameState.yellowScore = 0;
+            gameState.blueScore = 0;
+            gameState.actionLog = [];
+            gameState.isGameStarted = false;
+            gameState.currentGoal = null;
+
+            initializePlayerStats();
+
+            document.getElementById('yellow-score').textContent = '0';
+            document.getElementById('blue-score').textContent = '0';
+            document.getElementById('log-entries').innerHTML = '';
+
+            var gameControlBtn = document.getElementById('game-control-btn');
+            if (gameControlBtn) {
+                gameControlBtn.textContent = '🎮 START GAME';
+                gameControlBtn.className = 'control-btn start';
+            }
+
+            // Update team headers in game mode
+            updateTeamHeaders();
+            generatePlayerButtons();
+            updateCustomSoundButtons();
+            generateRenameInputs();
+            switchMode('game');
+
+            debugLog('Game started successfully');
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast('Game setup complete!');
+            }
+
+        } catch (error) {
+            debugLog('Error starting game: ' + error.message);
+            alert('Error starting game: ' + error.message);
+        }
+    }
+
+    function updateTeamHeaders() {
+        document.getElementById('yellow-team-header').textContent = '🟡 ' + gameState.yellowTeamName;
+        document.getElementById('blue-team-header').textContent = '🔵 ' + gameState.blueTeamName;
+        document.getElementById('yellow-players-header').textContent = '🟡 ' + gameState.yellowTeamName + ' Players';
+        document.getElementById('blue-players-header').textContent = '🔵 ' + gameState.blueTeamName + ' Players';
+    }
+
+    function initializePlayerStats() {
+        gameState.playerStats = {};
+
+        for (var i = 0; i < gameState.yellowPlayers.length; i++) {
+            var player = gameState.yellowPlayers[i];
+            if (player !== 'OWN GOAL') {
+                gameState.playerStats['yellow-' + player] = {
+                    goals: 0,
+                    assists: 0,
+                    team: 'yellow',
+                    name: player
+                };
+            }
+        }
+
+        for (var i = 0; i < gameState.bluePlayers.length; i++) {
+            var player = gameState.bluePlayers[i];
+            if (player !== 'OWN GOAL') {
+                gameState.playerStats['blue-' + player] = {
+                    goals: 0,
+                    assists: 0,
+                    team: 'blue',
+                    name: player
+                };
+            }
+        }
+
+        debugLog('Player stats initialized');
+    }
+
+    function generatePlayerButtons() {
+        debugLog('Generating player buttons');
+
+        var yellowContainer = document.getElementById('yellow-players-game');
+        var blueContainer = document.getElementById('blue-players-game');
+
+        if (!yellowContainer || !blueContainer) {
+            debugLog('ERROR: Player containers not found');
+            return;
+        }
+
+        yellowContainer.innerHTML = '';
+        blueContainer.innerHTML = '';
+
+        for (var i = 0; i < gameState.yellowPlayers.length; i++) {
+            var player = gameState.yellowPlayers[i];
+            var button = document.createElement('button');
+            button.className = player === 'OWN GOAL' ? 'player-btn own-goal-btn' : 'player-btn yellow';
+            button.textContent = player;
+            button.onclick = (function(team, playerName, index) {
+                return function() {
+                    scoreGoal(team, playerName, index);
+                };
+            })('yellow', player, i);
+            yellowContainer.appendChild(button);
+        }
+
+        for (var i = 0; i < gameState.bluePlayers.length; i++) {
+            var player = gameState.bluePlayers[i];
+            var button = document.createElement('button');
+            button.className = player === 'OWN GOAL' ? 'player-btn own-goal-btn' : 'player-btn blue';
+            button.textContent = player;
+            button.onclick = (function(team, playerName, index) {
+                return function() {
+                    scoreGoal(team, playerName, index);
+                };
+            })('blue', player, i);
+            blueContainer.appendChild(button);
+        }
+
+        debugLog('Generated ' + gameState.yellowPlayers.length + ' yellow buttons and ' + gameState.bluePlayers.length + ' blue buttons');
+    }
+
+    function updateCustomSoundButtons() {
+        for (var i = 1; i <= 8; i++) {
+            var button = document.getElementById('custom-sound-' + i);
+            var soundKey = 'custom-sound-' + i;
+
+            if (button) {
+                button.textContent = gameState.customSoundNames[i];
+
+                // Check if this custom sound has an assigned sound
+                if (gameState.soundAssignments[soundKey]) {
+                    button.classList.add('has-sound');
+                    button.classList.remove('empty');
+                } else {
+                    button.classList.remove('has-sound');
+                    button.classList.add('empty');
+                }
+            }
+        }
+    }
+
+    // New function to toggle rename effects
+    function toggleRenameEffects() {
+        var container = document.getElementById('rename-effects-container');
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            generateRenameInputs();
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    // New function to save effect names
+    function saveEffectNames() {
+        for (var i = 1; i <= 8; i++) {
+            var input = document.getElementById('rename-effect-' + i);
+            if (input && input.value.trim()) {
+                gameState.customSoundNames[i] = input.value.trim();
+            }
+        }
+
+        updateCustomSoundButtons();
+        toggleRenameEffects();
+
+        if (window.AndroidInterface) {
+            window.AndroidInterface.showToast('✅ Effect names saved!');
+        }
+
+        // Save to localStorage or Android storage
+        autoSaveSounds();
+    }
+
+    function playCustomSound(soundNumber) {
+        var soundKey = 'custom-sound-' + soundNumber;
+        var soundName = gameState.customSoundNames[soundNumber];
+
+        debugLog('Playing custom sound: ' + soundName + ' (' + soundKey + ')');
+
+        // Check if muted
+        if (isMuted) {
+            debugLog('Custom sound playback skipped - muted');
+            return;
+        }
+
+        // Stop any currently playing audio
+        stopCurrentAudio();
+
+        var soundId = gameState.soundAssignments[soundKey];
+
+        if (soundId) {
+            var sound = null;
+            for (var i = 0; i < gameState.sounds.length; i++) {
+                if (gameState.sounds[i].id === soundId) {
+                    sound = gameState.sounds[i];
+                    break;
+                }
+            }
+
+            if (sound) {
+                playSound(sound, soundName);
+            } else {
+                debugLog('Sound not found for ID: ' + soundId);
+            }
+        } else {
+            debugLog('No sound assigned for: ' + soundName);
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast('🔊 No sound assigned to ' + soundName);
+            }
+        }
+    }
+
+    function scoreGoal(team, player, playerIndex) {
+        if (!gameState.isGameStarted) {
+            var message = 'Please start the game first!';
+            alert(message);
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast(message);
+            }
+            return;
+        }
+
+        debugLog('Goal scored: ' + team + ' - ' + player);
+
+        gameState.currentGoal = {
+            team: team,
+            player: player,
+            playerIndex: playerIndex,
+            timestamp: new Date()
+        };
+
+        // Handle OWN GOAL differently - no assists, just confirm/cancel
+        if (player === 'OWN GOAL') {
+            var teamDisplayName = team === 'yellow' ? gameState.yellowTeamName : gameState.blueTeamName;
+            document.getElementById('own-goal-team').textContent = (team === 'yellow' ? '🟡 ' : '🔵 ') + teamDisplayName;
+            document.getElementById('own-goal-modal').style.display = 'block';
+            return;
+        }
+
+        // Regular goal - show assist modal
+        document.getElementById('goal-scorer').textContent = player;
+
+        var assistButtons = document.getElementById('assist-buttons');
+        assistButtons.innerHTML = '';
+
+        var teamPlayers = team === 'yellow' ? gameState.yellowPlayers : gameState.bluePlayers;
+        for (var i = 0; i < teamPlayers.length; i++) {
+            var teamPlayer = teamPlayers[i];
+            if (teamPlayer !== player && teamPlayer !== 'OWN GOAL') {
+                var assistBtn = document.createElement('button');
+                assistBtn.className = 'assist-btn';
+                assistBtn.textContent = teamPlayer;
+                assistBtn.onclick = (function(assistPlayer, index) {
+                    return function() {
+                        selectAssist(assistPlayer, index);
+                    };
+                })(teamPlayer, i);
+                assistButtons.appendChild(assistBtn);
+            }
+        }
+
+        document.getElementById('assist-modal').style.display = 'block';
+    }
+
+    function selectAssist(assistPlayer, assistIndex) {
+        gameState.currentGoal.assist = assistPlayer;
+        gameState.currentGoal.assistIndex = assistIndex;
+        confirmGoal();
+    }
+
+    function cancelOwnGoal() {
+        document.getElementById('own-goal-modal').style.display = 'none';
+        gameState.currentGoal = null;
+    }
+
+    function updatePlayerStats(goal) {
+        if (goal.player !== 'OWN GOAL') {
+            var playerKey = goal.team + '-' + goal.player;
+            if (gameState.playerStats[playerKey]) {
+                gameState.playerStats[playerKey].goals++;
+            }
+        }
+
+        if (goal.assist) {
+            var assistKey = goal.team + '-' + goal.assist;
+            if (gameState.playerStats[assistKey]) {
+                gameState.playerStats[assistKey].assists++;
+            }
+        }
+
+        debugLog('Player stats updated');
+    }
+
+    function cancelGoal() {
+        document.getElementById('assist-modal').style.display = 'none';
+        gameState.currentGoal = null;
+    }
+
+    function undoLastAction() {
+        // Find the last goal or own-goal action (working backwards from the end)
+        var lastActionIndex = -1;
+        for (var i = gameState.actionLog.length - 1; i >= 0; i--) {
+            var action = gameState.actionLog[i];
+            if (action.type === 'goal' || action.type === 'own-goal') {
+                lastActionIndex = i;
+                break;
+            }
+        }
+
+        if (lastActionIndex === -1) {
+            var message = 'No goals to undo!';
+            alert(message);
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast(message);
+            }
+            return;
+        }
+
+        var lastAction = gameState.actionLog[lastActionIndex];
+
+        debugLog('Found action to undo at index ' + lastActionIndex + ': ' + lastAction.text);
+
+        // Update scores and stats FIRST
+        if (lastAction.type === 'goal') {
+            // Undo regular goal
+            if (lastAction.team === 'yellow') {
+                gameState.yellowScore = Math.max(0, gameState.yellowScore - 1);
+                document.getElementById('yellow-score').textContent = gameState.yellowScore;
+            } else {
+                gameState.blueScore = Math.max(0, gameState.blueScore - 1);
+                document.getElementById('blue-score').textContent = gameState.blueScore;
+            }
+        // Update announcer-related state
+        gameState.totalGoalsScored = Math.max(0, gameState.totalGoalsScored - 1);
+
+        // Recalculate lead flags
+        var scoreDiff = Math.abs(gameState.yellowScore - gameState.blueScore);
+        if (scoreDiff < 3) {
+            gameState.hasThreeGoalLead = false;
+        }
+        if (scoreDiff < 5) {
+            gameState.hasFiveGoalLead = false;
+        }
+            // Update player stats
+            if (lastAction.player && lastAction.player !== 'OWN GOAL') {
+                var playerKey = lastAction.team + '-' + lastAction.player;
+                if (gameState.playerStats[playerKey]) {
+                    gameState.playerStats[playerKey].goals = Math.max(0, gameState.playerStats[playerKey].goals - 1);
+                }
+            }
+
+            if (lastAction.assist) {
+                var assistKey = lastAction.team + '-' + lastAction.assist;
+                if (gameState.playerStats[assistKey]) {
+                    gameState.playerStats[assistKey].assists = Math.max(0, gameState.playerStats[assistKey].assists - 1);
+                }
+            }
+        } else if (lastAction.type === 'own-goal') {
+            // Undo own goal
+            if (lastAction.scoringTeam === 'yellow') {
+                gameState.yellowScore = Math.max(0, gameState.yellowScore - 1);
+                document.getElementById('yellow-score').textContent = gameState.yellowScore;
+            } else {
+                gameState.blueScore = Math.max(0, gameState.blueScore - 1);
+                document.getElementById('blue-score').textContent = gameState.blueScore;
+            }
+        }
+
+        // Remove the action from the array
+        gameState.actionLog.splice(lastActionIndex, 1);
+
+        // Rebuild the entire log display
+        rebuildLogDisplay();
+
+        // Show success message
+        debugLog('Successfully undid: ' + lastAction.text);
+        if (window.AndroidInterface) {
+            window.AndroidInterface.showToast('↩️ Undid: ' + lastAction.player || 'goal');
+        }
+    }
+
+    // Simplified rebuild function
+    function rebuildLogDisplay() {
+        var logContainer = document.getElementById('log-entries');
+        logContainer.innerHTML = '';
+
+        for (var i = 0; i < gameState.actionLog.length; i++) {
+            var action = gameState.actionLog[i];
+            var logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.setAttribute('data-log-index', i);
+
+            if (action.type === 'goal') {
+                logEntry.className += ' ' + action.team;
+                logEntry.innerHTML = '<span class="log-entry-text">' + action.text + '</span>' +
+                    '<div class="log-entry-actions">' +
+                    '<button class="log-action-btn edit" onclick="editLogEntry(' + i + ')">✏️</button>' +
+                    '<button class="log-action-btn delete" onclick="deleteLogEntry(' + i + ')">❌</button>' +
+                    '</div>';
+            } else if (action.type === 'own-goal') {
+                logEntry.className += ' ' + action.scoringTeam;
+                logEntry.innerHTML = '<span class="log-entry-text">' + action.text + '</span>' +
+                    '<div class="log-entry-actions">' +
+                    '<button class="log-action-btn delete" onclick="deleteLogEntry(' + i + ')">❌</button>' +
+                    '</div>';
+            } else {
+                // System message (game start/stop)
+                logEntry.innerHTML = '<span class="log-entry-text">' + action.text + '</span>';
+            }
+
+            logContainer.appendChild(logEntry);
+        }
+
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function resetMatch() {
+        debugLog('Reset button clicked - showing confirmation modal');
+
+        // Show custom reset confirmation modal
+        document.getElementById('reset-modal').style.display = 'block';
+    }
+
+    function cancelReset() {
+        debugLog('Reset cancelled by user');
+        document.getElementById('reset-modal').style.display = 'none';
+    }
+
+    function confirmReset() {
+        debugLog('Reset confirmed by user - executing reset');
+        document.getElementById('reset-modal').style.display = 'none';
+
+        // Reset scores to 0-0
+        gameState.yellowScore = 0;
+        gameState.blueScore = 0;
+        document.getElementById('yellow-score').textContent = '0';
+        document.getElementById('blue-score').textContent = '0';
+        // Add these lines to reset announcer state:
+        gameState.totalGoalsScored = 0;
+        gameState.hasThreeGoalLead = false;
+        gameState.hasFiveGoalLead = false;
+
+        // Clear all action log
+        gameState.actionLog = [];
+
+        // Reset all player stats to 0
+        for (var key in gameState.playerStats) {
+            gameState.playerStats[key].goals = 0;
+            gameState.playerStats[key].assists = 0;
+        }
+
+        // Clear the log display
+        var logContainer = document.getElementById('log-entries');
+        logContainer.innerHTML = '';
+
+        // Add reset entry to log
+        var resetEntry = {
+            type: 'system',
+            text: '🔄 Match Reset - All data cleared',
+            timestamp: new Date()
+        };
+        gameState.actionLog.push(resetEntry);
+
+        // Add the reset entry to display
+        var logEntry = document.createElement('div');
+        logEntry.className = 'log-entry';
+        logEntry.setAttribute('data-log-index', '0');
+        logEntry.innerHTML = '<span class="log-entry-text">' + resetEntry.text + '</span>';
+        logContainer.appendChild(logEntry);
+
+        // Show success message
+        debugLog('Match reset completed - all data cleared');
+
+        if (window.AndroidInterface) {
+            window.AndroidInterface.showToast('🔄 Match reset completed - Score: 0-0');
+        }
+
+        // Add a brief visual feedback
+        document.getElementById('yellow-score').classList.add('score-animation');
+        document.getElementById('blue-score').classList.add('score-animation');
+        setTimeout(function() {
+            document.getElementById('yellow-score').classList.remove('score-animation');
+            document.getElementById('blue-score').classList.remove('score-animation');
+        }, 1000);
+    }
+
+    function exportLog() {
+        if (gameState.actionLog.length === 0) {
+            var message = 'No match data to export!';
+            alert(message);
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast(message);
+            }
+            return;
+        }
+
+        var report = generateMatchReport();
+        var filename = 'football_match_' + new Date().toISOString().split('T')[0] + '_' + new Date().toTimeString().split(' ')[0].replace(/:/g, '-') + '.txt';
+
+        if (window.AndroidInterface) {
+            window.AndroidInterface.saveMatchReport(report, filename);
+        } else {
+            alert('Match report ready:\n\n' + report);
+        }
+
+        debugLog('Match report exported: ' + filename);
+    }
+
+    function getAllPlayerStats() {
+        var players = [];
+        for (var key in gameState.playerStats) {
+            var player = gameState.playerStats[key];
+            // Only include players who have goals or assists
+            if (player.goals > 0 || player.assists > 0) {
+                players.push(player);
+            }
+        }
+
+        // Sort by goals first (descending), then by assists (descending)
+        players.sort(function(a, b) {
+            if (b.goals !== a.goals) {
+                return b.goals - a.goals; // Sort by goals first
+            }
+            return b.assists - a.assists; // Then by assists
+        });
+
+        return players;
+    }
+
+    function getTopScorers() {
+        var players = [];
+        for (var key in gameState.playerStats) {
+            if (gameState.playerStats[key].goals > 0) {
+                players.push(gameState.playerStats[key]);
+            }
+        }
+        players.sort(function(a, b) {
+            return b.goals - a.goals;
+        });
+        return players.slice(0, 5);
+    }
+
+    function getTopAssistants() {
+        var players = [];
+        for (var key in gameState.playerStats) {
+            if (gameState.playerStats[key].assists > 0) {
+                players.push(gameState.playerStats[key]);
+            }
+        }
+        players.sort(function(a, b) {
+            return b.assists - a.assists;
+        });
+        return players.slice(0, 5);
+    }
+
+    // Complete Sound Functions
+    function openNativeSoundPicker() {
+        if (window.AndroidInterface) {
+            debugLog('Opening native sound picker');
+            window.AndroidInterface.openSoundPicker();
+        } else {
+            alert('Native sound picker only works in the Android app!');
+        }
+    }
+
+    function addSoundFromNative(fileName, dataUrl, fileSize) {
+        debugLog('Adding sound from native: ' + fileName + ', Size: ' + fileSize);
+
+        try {
+            var sound = {
+                name: fileName,
+                data: dataUrl,
+                id: 'sound_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                size: fileSize,
+                type: getMimeTypeFromDataUrl(dataUrl),
+                assigned: false,
+                uploadDate: new Date().toISOString()
+            };
+
+            gameState.sounds.push(sound);
+
+            // Make sure the sound list exists before trying to display
+            var soundList = document.getElementById('sound-list');
+            if (soundList) {
+                displaySoundItem(sound);
+            } else {
+                debugLog('Warning: sound-list element not found, will display on next refresh');
+            }
+
+            autoSaveSounds();
+            showUploadStatus('✅ Successfully uploaded: ' + fileName, 'success');
+
+            debugLog('Sound added successfully. Total sounds: ' + gameState.sounds.length);
+
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast('🎵 "' + fileName + '" uploaded successfully');
+            }
+        } catch (error) {
+            debugLog('Error in addSoundFromNative: ' + error.message);
+            // Still show success if the sound was added
+            if (gameState.sounds.length > 0) {
+                showUploadStatus('✅ Successfully uploaded: ' + fileName, 'success');
+                if (window.AndroidInterface) {
+                    window.AndroidInterface.showToast('🎵 "' + fileName + '" uploaded successfully');
+                }
+            } else {
+                showUploadStatus('❌ Error adding sound: ' + error.message, 'error');
+            }
+        }
+    }
+
+    function getMimeTypeFromDataUrl(dataUrl) {
+        var match = dataUrl.match(/data:([^;]+);/);
+        return match ? match[1] : 'audio/mpeg';
+    }
+
+    function showUploadStatus(message, type) {
+        var statusDiv = document.getElementById('upload-status');
+        if (statusDiv) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.color = type === 'success' ? '#27ae60' : '#e74c3c';
+            statusDiv.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
+            statusDiv.textContent = message;
+
+            setTimeout(function() {
+                statusDiv.style.display = 'none';
+            }, 4000);
+        }
+    }
+
+    function displayAllSounds() {
+        var soundList = document.getElementById('sound-list');
+
+        if (!soundList) {
+            debugLog('ERROR: sound-list element not found');
+            return;
+        }
+
+        debugLog('Displaying all sounds. Count: ' + gameState.sounds.length);
+
+        if (gameState.sounds.length === 0) {
+            soundList.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">' +
+                '<h3>No sounds uploaded yet</h3>' +
+                '<p>Click "Upload Sound from Device" to get started!</p>' +
+                '</div>';
+            return;
+        }
+
+        soundList.innerHTML = '';
+        for (var i = 0; i < gameState.sounds.length; i++) {
+            displaySoundItem(gameState.sounds[i]);
+        }
+    }
+
+    // Modified assignSound function to prevent multiple assignments
+    function assignSound(soundId, assignment) {
+        try {
+            if (assignment) {
+                // Check if this assignment already has a sound
+                if (gameState.soundAssignments[assignment]) {
+                    var existingSoundId = gameState.soundAssignments[assignment];
+                    if (existingSoundId !== soundId) {
+                        // Different sound already assigned - ask for confirmation
+                        var existingSound = null;
+                        for (var i = 0; i < gameState.sounds.length; i++) {
+                            if (gameState.sounds[i].id === existingSoundId) {
+                                existingSound = gameState.sounds[i];
+                                break;
+                            }
+                        }
+
+                        var confirmMsg = 'This assignment already has a sound: "' + (existingSound ? existingSound.name : 'Unknown') + '"\n\nDo you want to replace it?';
+                        if (!confirm(confirmMsg)) {
+                            // Restore select to empty value
+                            var select = document.getElementById('select-' + soundId);
+                            if (select) {
+                                select.value = '';
+                            }
+                            return;
+                        }
+
+                        // Unassign the previous sound
+                        if (existingSound) {
+                            existingSound.assigned = false;
+                            updateSoundItemStatus(existingSoundId, false);
+                        }
+                    }
+                }
+
+                // Remove previous assignment for this sound
+                for (var key in gameState.soundAssignments) {
+                    if (gameState.soundAssignments[key] === soundId) {
+                        delete gameState.soundAssignments[key];
+                    }
+                }
+
+                // Add new assignment
+                gameState.soundAssignments[assignment] = soundId;
+
+                // Update sound object
+                var sound = null;
+                for (var i = 0; i < gameState.sounds.length; i++) {
+                    if (gameState.sounds[i].id === soundId) {
+                        sound = gameState.sounds[i];
+                        break;
+                    }
+                }
+
+                if (sound) {
+                    sound.assigned = true;
+                    updateSoundItemStatus(soundId, true);
+                }
+
+                debugLog('Assigned sound ' + soundId + ' to ' + assignment);
+                autoSaveSounds();
+
+                if (sound && window.AndroidInterface) {
+                    var displayName = getAssignmentDisplayName(assignment);
+                    window.AndroidInterface.showToast('🎵 "' + sound.name + '" assigned to ' + displayName);
+                }
+            } else {
+                // Unassign sound
+                for (var key in gameState.soundAssignments) {
+                    if (gameState.soundAssignments[key] === soundId) {
+                        delete gameState.soundAssignments[key];
+                    }
+                }
+
+                var sound = null;
+                for (var i = 0; i < gameState.sounds.length; i++) {
+                    if (gameState.sounds[i].id === soundId) {
+                        sound = gameState.sounds[i];
+                        break;
+                    }
+                }
+
+                if (sound) {
+                    sound.assigned = false;
+                    updateSoundItemStatus(soundId, false);
+                }
+
+                autoSaveSounds();
+            }
+
+            // Update custom sound button appearance
+            updateCustomSoundButtons();
+
+        } catch (error) {
+            debugLog('Error assigning sound: ' + error.message);
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast('❌ Error assigning sound');
+            }
+            // Restore select to empty value
+            var select = document.getElementById('select-' + soundId);
+            if (select) {
+                select.value = '';
+            }
+        }
+    }
+
+    // Helper function to update sound item status
+    function updateSoundItemStatus(soundId, isAssigned) {
+        var soundItem = document.querySelector('[data-sound-id="' + soundId + '"]');
+        if (soundItem) {
+            var statusSpans = soundItem.querySelectorAll('span');
+            var statusSpan = null;
+
+            // Find the status span (the one with padding: 6px)
+            for (var i = 0; i < statusSpans.length; i++) {
+                if (statusSpans[i].style.padding && statusSpans[i].style.padding.includes('6px')) {
+                    statusSpan = statusSpans[i];
+                    break;
+                }
+            }
+
+            if (statusSpan) {
+                if (isAssigned) {
+                    statusSpan.style.cssText = 'padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; background: #d4edda; color: #155724;';
+                    statusSpan.textContent = '✅ Assigned';
+                } else {
+                    statusSpan.style.cssText = 'padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; background: #f8d7da; color: #721c24;';
+                    statusSpan.textContent = '⚠️ Not Assigned';
+                }
+            }
+        }
+
+        // Also update the select dropdown if it's set
+        var select = document.getElementById('select-' + soundId);
+        if (select && !isAssigned) {
+            select.value = '';
+        }
+    }
+
+    // Helper function to get display name for assignment
+    function getAssignmentDisplayName(assignment) {
+        if (assignment === 'yellow-team') return '🟡 Yellow Team';
+        if (assignment === 'blue-team') return '🔵 Blue Team';
+        if (assignment === 'yellow-own-goal') return '🟡 Yellow Team Own Goal';
+        if (assignment === 'blue-own-goal') return '🔵 Blue Team Own Goal';
+        if (assignment.startsWith('custom-sound-')) {
+            var soundNum = assignment.replace('custom-sound-', '');
+            return gameState.customSoundNames[parseInt(soundNum)];
+        }
+        return assignment.replace('-', ' ').replace('own goal', 'OWN GOAL');
+    }
+
+// Fixed removeSound function
+function removeSound(soundId) {
+    debugLog('Remove sound clicked for ID: ' + soundId);
+
+    var sound = null;
+    var soundIndex = -1;
+    for (var i = 0; i < gameState.sounds.length; i++) {
+        if (gameState.sounds[i].id === soundId) {
+            sound = gameState.sounds[i];
+            soundIndex = i;
+            break;
+        }
+    }
+
+    if (!sound) {
+        debugLog('ERROR: Sound not found for ID: ' + soundId);
+        if (window.AndroidInterface) {
+            window.AndroidInterface.showToast('❌ Sound not found');
+        }
+        return;
+    }
+
+    var soundName = sound.name;
+    debugLog('Found sound to remove: ' + soundName + ' at index ' + soundIndex);
+
+    // Confirmation prompt
+    if (confirm('🗑️ Are you sure you want to remove "' + soundName + '"?\n\nThis will:\n• Remove the sound from the app\n• Clear all assignments using this sound\n• This action cannot be undone')) {
+        debugLog('User confirmed removal of: ' + soundName);
+
+        // Stop current audio if it's the one being removed
+        if (currentAudio && sound && currentAudio.src === sound.data) {
+            stopCurrentAudio();
+        }
+
+        // Remove all assignments for this sound
+        var assignmentKeysToRemove = [];
+        for (var key in gameState.soundAssignments) {
+            if (gameState.soundAssignments[key] === soundId) {
+                assignmentKeysToRemove.push(key);
+            }
+        }
+
+        for (var i = 0; i < assignmentKeysToRemove.length; i++) {
+            delete gameState.soundAssignments[assignmentKeysToRemove[i]];
+            debugLog('Removed assignment: ' + assignmentKeysToRemove[i]);
+        }
+
+        // Remove from sounds array
+        if (soundIndex !== -1) {
+            gameState.sounds.splice(soundIndex, 1);
+            debugLog('Removed from sounds array. New length: ' + gameState.sounds.length);
+        }
+
+        // Remove the DOM element
+        var soundItem = document.querySelector('[data-sound-id="' + soundId + '"]');
+        if (soundItem) {
+            soundItem.remove();
+            debugLog('Removed DOM element');
+        } else {
+            debugLog('WARNING: DOM element not found for sound ID: ' + soundId);
+        }
+
+        // Update all UI elements that might be affected
+        updateAllSoundAssignmentButtons();
+        updateCustomSoundButtons();
+        updateSoundsStats();
+
+        // If we're in game mode, also update the rename effects container
+        if (document.getElementById('rename-effects-container').style.display !== 'none') {
+            generateRenameInputs();
+        }
+
+        // If no sounds left, show empty message
+        if (gameState.sounds.length === 0) {
+            var soundList = document.getElementById('sound-list');
+            if (soundList) {
+                soundList.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">' +
+                    '<h3>No sounds uploaded yet</h3>' +
+                    '<p>Click "Upload Sound from Device" to get started!</p>' +
+                    '</div>';
+            }
+        }
+
+        // Save the updated state
+        autoSaveSounds();
+
+        if (window.AndroidInterface) {
+            window.AndroidInterface.showToast('🗑️ "' + soundName + '" removed successfully');
+        }
+
+        debugLog('Sound removed successfully: ' + soundName + ' (ID: ' + soundId + ')');
+    } else {
+        debugLog('User cancelled removal of: ' + soundName);
+    }
+}
+
+// Also fix the updateLogEntryIndices function that was referenced but missing
+function updateLogEntryIndices() {
+    var logEntries = document.querySelectorAll('.log-entry[data-log-index]');
+    for (var i = 0; i < logEntries.length; i++) {
+        var entry = logEntries[i];
+        entry.setAttribute('data-log-index', i);
+
+        // Update the button onclick handlers
+        var editBtn = entry.querySelector('.log-action-btn.edit');
+        var deleteBtn = entry.querySelector('.log-action-btn.delete');
+
+        if (editBtn) {
+            editBtn.onclick = function(index) {
+                return function() { editLogEntry(index); };
+            }(i);
+        }
+
+        if (deleteBtn) {
+            deleteBtn.onclick = function(index) {
+                return function() { deleteLogEntry(index); };
+            }(i);
+        }
+    }
+}
+
+    // New function to update sound assignment dropdowns
+    function updateSoundAssignmentDropdowns() {
+        for (var i = 0; i < gameState.sounds.length; i++) {
+            var sound = gameState.sounds[i];
+            var soundItem = document.querySelector('[data-sound-id="' + sound.id + '"]');
+            if (soundItem) {
+                soundItem.remove();
+                displaySoundItem(sound);
+            }
+        }
+    }
+
+    // Enhanced audio control functions
+    function stopCurrentAudio() {
+        if (currentAudio) {
+            try {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                // Clear event handlers to prevent memory leaks
+                currentAudio.onended = null;
+                currentAudio.onerror = null;
+                currentAudio.ontimeupdate = null;
+                // Clear the source and force cleanup
+                currentAudio.src = '';
+                currentAudio.load();
+            } catch (e) {
+                debugLog('Error stopping audio: ' + e.message);
+            } finally {
+                currentAudio = null;
+                debugLog('Stopped current audio playback');
+            }
+        }
+
+        // Clear any existing timeout
+        if (audioTimeout) {
+            clearTimeout(audioTimeout);
+            audioTimeout = null;
+        }
+    }
+
+    function toggleMute() {
+        isMuted = !isMuted;
+        var muteBtn = document.getElementById('mute-btn');
+
+        if (isMuted) {
+            muteBtn.innerHTML = '🔇 MUTED';
+            muteBtn.style.background = '#e74c3c';
+            muteBtn.title = 'Sounds are muted - click to unmute';
+            stopCurrentAudio(); // Stop any currently playing sound
+
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast('🔇 Goal sounds muted');
+            }
+            debugLog('Sounds muted');
+        } else {
+            muteBtn.innerHTML = '🔊 SOUNDS';
+            muteBtn.style.background = '#9b59b6';
+            muteBtn.title = 'Sounds are enabled - click to mute';
+
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast('🔊 Goal sounds enabled');
+            }
+            debugLog('Sounds enabled');
+        }
+    }
+
+    // Unified play sound function with 10-second limit
+    function playSound(sound, description) {
+        try {
+            currentAudio = new Audio(sound.data);
+            currentAudio.volume = 0.8;
+
+            // Set up 10-second timeout
+            audioTimeout = setTimeout(function() {
+                debugLog('Sound playback exceeded 10 seconds - stopping');
+                stopCurrentAudio();
+            }, 10000);
+
+            // Clear currentAudio when sound finishes or errors
+            currentAudio.onended = function() {
+                debugLog('Sound ended naturally');
+                stopCurrentAudio();
+            };
+
+            currentAudio.onerror = function(e) {
+                debugLog('Audio playback error: ' + e.type);
+                stopCurrentAudio();
+            };
+
+            currentAudio.play().then(function() {
+                debugLog('Sound played successfully: ' + sound.name + ' (' + description + ')');
+                if (window.AndroidInterface) {
+                    window.AndroidInterface.playSound(sound.name, description);
+                }
+            }).catch(function(e) {
+                debugLog('Sound play error: ' + e.message);
+                stopCurrentAudio();
+                if (window.AndroidInterface) {
+                    window.AndroidInterface.showToast('🔊 Sound playback failed');
+                }
+            });
+        } catch (e) {
+            debugLog('Error creating audio: ' + e.message);
+            currentAudio = null;
+            if (audioTimeout) {
+                clearTimeout(audioTimeout);
+                audioTimeout = null;
+            }
+        }
+    }
+
+    function playGoalSound(team, player) {
+        debugLog('Attempting to play sound for: ' + team + ' - ' + player);
+
+        // Check if muted
+        if (isMuted) {
+            debugLog('Sound playback skipped - muted');
+            return;
+        }
+
+        // Stop any currently playing audio
+        stopCurrentAudio();
+
+        var soundId = null;
+        var playerKey = null;
+        var teamKey = team + '-team';
+
+        // Special handling for OWN GOAL
+        if (player === 'OWN GOAL') {
+            playerKey = team + '-own-goal';
+        } else {
+            // Get the original slot number for this player
+            var playerSlots = team === 'yellow' ? gameState.yellowPlayerSlots : gameState.bluePlayerSlots;
+            var originalSlotNumber = playerSlots[player];
+
+            if (originalSlotNumber) {
+                playerKey = team + '-player-' + originalSlotNumber;
+            }
+        }
+
+        // Try player-specific sound first
+        if (playerKey && gameState.soundAssignments[playerKey]) {
+            soundId = gameState.soundAssignments[playerKey];
+            debugLog('Found player-specific sound: ' + playerKey);
+        }
+        // Fallback to team sound
+        else if (gameState.soundAssignments[teamKey]) {
+            soundId = gameState.soundAssignments[teamKey];
+            debugLog('Found team sound: ' + teamKey);
+        }
+
+        if (soundId) {
+            var sound = null;
+            for (var i = 0; i < gameState.sounds.length; i++) {
+                if (gameState.sounds[i].id === soundId) {
+                    sound = gameState.sounds[i];
+                    break;
+                }
+            }
+
+            if (sound) {
+                var description = 'Goal: ' + team + ' - ' + player;
+                playSound(sound, description);
+            } else {
+                debugLog('Sound not found for ID: ' + soundId);
+            }
+        } else {
+            debugLog('No sound assigned for: ' + team + ' - ' + player);
+        }
+    }
+
+    function autoSaveSounds() {
+        debugLog('Auto-saving sounds');
+        if (window.AndroidInterface) {
+            try {
+                // Include custom sound names in the save
+                var saveData = {
+                    sounds: gameState.sounds,
+                    soundAssignments: gameState.soundAssignments,
+                    customSoundNames: gameState.customSoundNames
+                };
+                var soundsJson = JSON.stringify(saveData);
+                window.AndroidInterface.saveSounds(soundsJson, '');
+            } catch (error) {
+                debugLog('Auto-save failed: ' + error.message);
+            }
+        }
+        updateSoundsStats();
+    }
+
+    function saveAllSounds() {
+        debugLog('Saving sounds via Android interface');
+
+        if (window.AndroidInterface) {
+            try {
+                var saveData = {
+                    sounds: gameState.sounds,
+                    soundAssignments: gameState.soundAssignments,
+                    customSoundNames: gameState.customSoundNames
+                };
+                var soundsJson = JSON.stringify(saveData);
+                window.AndroidInterface.saveSounds(soundsJson, '');
+                updateSoundsStats();
+                debugLog('Saved ' + gameState.sounds.length + ' sounds to Android storage');
+            } catch (error) {
+                debugLog('Error saving sounds: ' + error.message);
+                if (window.AndroidInterface) {
+                    window.AndroidInterface.showToast('❌ Error saving sounds');
+                }
+            }
+        } else {
+            alert('💾 Android interface not available. This feature requires the Android app.');
+        }
+    }
+
+    function loadSavedSounds() {
+        debugLog('Loading sounds via Android interface');
+
+        if (window.AndroidInterface) {
+            try {
+                window.AndroidInterface.loadSounds();
+            } catch (error) {
+                debugLog('Error loading sounds: ' + error.message);
+                if (window.AndroidInterface) {
+                    window.AndroidInterface.showToast('❌ Error loading sounds');
+                }
+            }
+        } else {
+            alert('📂 Android interface not available. This feature requires the Android app.');
+        }
+    }
+
+    function loadSoundsFromAndroid(soundsJson, assignmentsJson) {
+        debugLog('Loading sounds from Android storage');
+
+        try {
+            if (soundsJson && soundsJson.trim() !== '') {
+                var data = JSON.parse(soundsJson);
+
+                // Handle both old and new data formats
+                if (data.sounds) {
+                    // New format with all data
+                    gameState.sounds = data.sounds || [];
+                    gameState.soundAssignments = data.soundAssignments || {};
+                    if (data.customSoundNames) {
+                        gameState.customSoundNames = data.customSoundNames;
+                    }
+                } else {
+                    // Old format - just sounds array
+                    gameState.sounds = data || [];
+
+                    // Try to load assignments from second parameter
+                    if (assignmentsJson && assignmentsJson.trim() !== '') {
+                        var assignments = JSON.parse(assignmentsJson);
+                        gameState.soundAssignments = assignments || {};
+                    }
+                }
+
+                debugLog('Loaded ' + gameState.sounds.length + ' sounds from Android');
+                debugLog('Loaded ' + Object.keys(gameState.soundAssignments).length + ' assignments from Android');
+            }
+
+            displayAllSounds();
+            updateSoundsStats();
+            updateCustomSoundButtons();
+            generateRenameInputs();
+
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast('📂 Loaded ' + gameState.sounds.length + ' saved sounds!');
+            }
+        } catch (error) {
+            debugLog('Error parsing sounds from Android: ' + error.message);
+            if (window.AndroidInterface) {
+                window.AndroidInterface.showToast('❌ Error loading saved sounds');
+            }
+        }
+    }
+
+// Also add this function to clear all sounds and refresh the display
+function clearAllSounds() {
+    if (gameState.sounds.length === 0) {
+        if (window.AndroidInterface) {
+            window.AndroidInterface.showToast('No sounds to clear');
+        } else {
+            alert('No sounds to clear');
+        }
+        return;
+    }
+
+    var confirmMessage = '🗑️ Clear All Sounds\n\n';
+    confirmMessage += 'This will permanently remove:\n';
+    confirmMessage += '• ' + gameState.sounds.length + ' uploaded sound' + (gameState.sounds.length !== 1 ? 's' : '') + '\n';
+    confirmMessage += '• All sound assignments\n';
+    confirmMessage += '• All saved sound data\n\n';
+    confirmMessage += 'This action cannot be undone.\n\n';
+    confirmMessage += 'Are you sure you want to continue?';
+
+    if (confirm(confirmMessage)) {
+        debugLog('Clearing all sounds via user confirmation');
+
+        var soundCount = gameState.sounds.length;
+
+        // Stop any playing audio first
+        stopCurrentAudio();
+
+        // Clear all data
+        gameState.sounds = [];
+        gameState.soundAssignments = {};
+
+        // Clear the UI and show empty message
+        displayAllSounds();
+
+        // Update all UI elements
+        updateAllSoundAssignmentButtons();
+        updateCustomSoundButtons();
+        updateSoundsStats();
+
+        // Clear from Android storage
+        if (window.AndroidInterface) {
+            try {
+                window.AndroidInterface.clearAllSounds();
+                window.AndroidInterface.showToast('🗑️ Cleared ' + soundCount + ' sounds successfully');
+            } catch (error) {
+                debugLog('Error clearing sounds from Android storage: ' + error.message);
+            }
+        }
+
+        debugLog('All sounds cleared: ' + soundCount + ' sounds removed');
+    }
+}
+
+    function showStorageInfo() {
+        debugLog('Getting storage info');
+
+        var soundsSize = 0;
+        for (var i = 0; i < gameState.sounds.length; i++) {
+            soundsSize += gameState.sounds[i].size || 0;
+        }
+        var soundsSizeMB = (soundsSize / 1024 / 1024).toFixed(2);
+        var assignedSounds = 0;
+        for (var i = 0; i < gameState.sounds.length; i++) {
+            if (gameState.sounds[i].assigned) {
+                assignedSounds++;
+            }
+        }
+
+        if (window.AndroidInterface) {
+            try {
+                // Let Android show the full storage info
+                window.AndroidInterface.getStorageInfo();
+            } catch (error) {
+                debugLog('Error getting storage info: ' + error.message);
+                if (window.AndroidInterface) {
+                    window.AndroidInterface.showToast('❌ Error getting storage info');
+                }
+            }
+        } else {
+            var info = '🔊 Sound Storage Information:\n\n';
+            info += '📊 Current Statistics:\n';
+            info += '• Total sounds: ' + gameState.sounds.length + '\n';
+            info += '• Assigned sounds: ' + assignedSounds + '/' + gameState.sounds.length + '\n';
+            info += '• Storage used: ' + soundsSizeMB + ' MB\n';
+            info += '• Active assignments: ' + Object.keys(gameState.soundAssignments).length + '\n\n';
+            info += '💡 Note: Android interface not available for detailed storage info.';
+
+            alert(info);
+        }
+    }
+
+    // New function to open sound selection modal
+    function openSoundSelection(target) {
+        debugLog('Opening sound selection for: ' + target);
+        currentSoundTarget = target;
+
+        var targetText = '';
+        if (target === 'yellow-team') {
+            targetText = '🟡 Yellow Team';
+        } else if (target === 'blue-team') {
+            targetText = '🔵 Blue Team';
+        } else if (target === 'yellow-own-goal') {
+            targetText = '🟡 Yellow Team Own Goal';
+        } else if (target === 'blue-own-goal') {
+            targetText = '🔵 Blue Team Own Goal';
+        } else if (target.startsWith('custom-sound-')) {
+            var num = target.replace('custom-sound-', '');
+            targetText = gameState.customSoundNames[num];
+        } else if (target.includes('-player-')) {
+            var parts = target.split('-');
+            var team = parts[0];
+            var playerNum = parts[2];
+            var input = document.getElementById(target);
+            var playerName = input ? input.value : 'Player ' + playerNum;
+            if (!playerName) playerName = 'Player ' + playerNum;
+            targetText = (team === 'yellow' ? '🟡 ' : '🔵 ') + playerName;
+        } else if (target.startsWith('announcer-')) {
+            // Handle announcer targets
+            var announcerType = target.replace('announcer-', '');
+            var announcerNames = {
+                'game-start': '🏁 Start of the Game',
+                'first-goal': '⚡ First Goal of the Game',
+                'hat-trick': '🎩 Player Hat Trick',
+                'five-goals': '🌟 Player Scores 5 Goals',
+                'game-end': '🏆 End of the Match',
+                'tie-game': '🤝 Game is Tied',
+                'three-lead': '🔥 3 Goal Lead',
+                'five-lead': '💥 5 Goal Lead'
+            };
+            targetText = announcerNames[announcerType] || announcerType;
+        }
+
+        document.getElementById('sound-selection-target').textContent = 'Assigning sound to: ' + targetText;
+        // Populate sound list
+        var soundListModal = document.getElementById('sound-list-modal');
+        soundListModal.innerHTML = '';
+
+        if (gameState.sounds.length === 0) {
+            soundListModal.innerHTML = '<p style="color: #666;">No sounds uploaded yet. Please upload sounds first.</p>';
+        } else {
+            // Add "No Sound" option
+            var noSoundDiv = document.createElement('div');
+            noSoundDiv.style.cssText = 'padding: 10px; margin: 5px 0; background: #f8f9fa; border-radius: 8px; cursor: pointer; border: 2px solid #ddd;';
+            noSoundDiv.innerHTML = '<strong>❌ No Sound</strong>';
+            noSoundDiv.onclick = function() {
+                assignSoundToTarget(null);
+            };
+            soundListModal.appendChild(noSoundDiv);
+
+            // Add each sound
+            for (var i = 0; i < gameState.sounds.length; i++) {
+                var sound = gameState.sounds[i];
+                var soundDiv = document.createElement('div');
+                soundDiv.style.cssText = 'padding: 10px; margin: 5px 0; background: #f8f9fa; border-radius: 8px; cursor: pointer; border: 2px solid #ddd;';
+                soundDiv.innerHTML = '<strong>🎵 ' + sound.name + '</strong>';
+                soundDiv.onclick = (function(soundId) {
+                    return function() {
+                        assignSoundToTarget(soundId);
+                    };
+                })(sound.id);
+                soundListModal.appendChild(soundDiv);
+            }
+        }
+
+        document.getElementById('sound-selection-modal').style.display = 'block';
+    }
+
+    function closeSoundSelection() {
+        document.getElementById('sound-selection-modal').style.display = 'none';
+        currentSoundTarget = null;
+    }
+
+    function assignSoundToTarget(soundId) {
+        if (!currentSoundTarget) return;
+
+        debugLog('Assigning sound ' + soundId + ' to ' + currentSoundTarget);
+
+        // Remove any existing assignment for this target
+        delete gameState.soundAssignments[currentSoundTarget];
+
+        // Add new assignment if soundId is provided
+        if (soundId) {
+            gameState.soundAssignments[currentSoundTarget] = soundId;
+        }
+
+        // Update button appearance
+        updateSoundAssignmentButton(currentSoundTarget);
+
+        // Update custom sound buttons if needed
+        if (currentSoundTarget.startsWith('custom-sound-')) {
+            updateCustomSoundButtons();
+        }
+
+        closeSoundSelection();
+        autoSaveSounds();
+
+        // Update announcer status if needed
+        if (currentSoundTarget.startsWith('announcer-')) {
+            updateAnnouncerStatus(currentSoundTarget);
+        }
+
+        if (window.AndroidInterface) {
+            var message = soundId ? '🎵 Sound assigned successfully' : '❌ Sound assignment removed';
+            window.AndroidInterface.showToast(message);
+        }
+    }
+
+    function updateSoundAssignmentButton(target) {
+        var btnId = '';
+        if (target === 'yellow-team') {
+            btnId = 'yellow-team-sound-btn';
+        } else if (target === 'blue-team') {
+            btnId = 'blue-team-sound-btn';
+        } else if (target === 'yellow-own-goal') {
+            btnId = 'yellow-own-goal-sound-btn';
+        } else if (target === 'blue-own-goal') {
+            btnId = 'blue-own-goal-sound-btn';
+        } else if (target.startsWith('custom-sound-')) {
+            btnId = 'effect-sound-btn-' + target.replace('custom-sound-', '');
+        } else if (target.includes('-player-')) {
+            var parts = target.split('-');
+            btnId = parts[0] + '-player-sound-' + parts[2];
+        }
+
+        var btn = document.getElementById(btnId);
+        if (btn) {
+            if (gameState.soundAssignments[target]) {
+                btn.classList.add('has-sound');
+            } else {
+                btn.classList.remove('has-sound');
+            }
+        }
+    }
+
+    function updatePlayerSoundKey(team, playerNum) {
+        // This function is called when a player name changes
+        // We need to update the sound assignment key if the player has a sound
+        var oldKey = team + '-player-' + playerNum;
+        var input = document.getElementById(oldKey);
+        if (input && input.value) {
+            var newKey = team + '-' + input.value;
+            if (gameState.soundAssignments[oldKey] && oldKey !== newKey) {
+                gameState.soundAssignments[newKey] = gameState.soundAssignments[oldKey];
+                delete gameState.soundAssignments[oldKey];
+                autoSaveSounds();
+            }
+        }
+    }
+      // Function to update announcer buttons
+    function updateAnnouncerButtons() {
+        var announcerRules = [
+            'game-start', 'first-goal', 'hat-trick', 'five-goals',
+            'game-end', 'tie-game', 'three-lead', 'five-lead'
+        ];
+
+        for (var i = 0; i < announcerRules.length; i++) {
+            var rule = announcerRules[i];
+            var key = 'announcer-' + rule;
+            updateSoundAssignmentButton(key);
+            updateAnnouncerStatus(key);
+        }
+    }
+
+// Function to update announcer status display
+    function updateAnnouncerStatus(key) {
+        var statusId = key + '-status';
+        var statusElement = document.getElementById(statusId);
+        if (statusElement) {
+            if (gameState.soundAssignments[key]) {
+                statusElement.className = 'rule-status assigned';
+                statusElement.textContent = '✅ Assigned';
+            } else {
+                statusElement.className = 'rule-status not-assigned';
+                statusElement.textContent = 'Not Assigned';
+            }
+        }
+    }
+
+// Function to play announcer sound
+    function playAnnouncerSound(announcerKey, callback) {
+        debugLog('Checking announcer sound for: ' + announcerKey);
+
+    // Check if muted
+        if (isMuted) {
+            debugLog('Announcer sound skipped - muted');
+            if (callback) callback();
+            return;
+        }
+
+        var soundId = gameState.soundAssignments[announcerKey];
+        if (!soundId) {
+            debugLog('No announcer sound assigned for: ' + announcerKey);
+            if (callback) callback();
+            return;
+        }
+
+        var sound = null;
+        for (var i = 0; i < gameState.sounds.length; i++) {
+            if (gameState.sounds[i].id === soundId) {
+                sound = gameState.sounds[i];
+                break;
+            }
+        }
+
+        if (sound) {
+            debugLog('Playing announcer sound: ' + announcerKey);
+
+        // Stop any currently playing audio
+            stopCurrentAudio();
+
+            try {
+                currentAudio = new Audio(sound.data);
+            currentAudio.volume = 0.8;
+
+            // Set up timeout for 10-second limit
+            audioTimeout = setTimeout(function() {
+                debugLog('Announcer sound exceeded 10 seconds - stopping');
+                stopCurrentAudio();
+                if (callback) callback();
+            }, 10000);
+
+            currentAudio.onended = function() {
+                debugLog('Announcer sound ended');
+                stopCurrentAudio();
+                // Wait a short moment before playing the next sound
+                setTimeout(function() {
+                    if (callback) callback();
+                }, 200);
+            };
+
+            currentAudio.onerror = function(e) {
+                debugLog('Announcer audio error: ' + e.type);
+                stopCurrentAudio();
+                if (callback) callback();
+            };
+
+            currentAudio.play().then(function() {
+                debugLog('Announcer sound playing: ' + announcerKey);
+            }).catch(function(e) {
+                debugLog('Announcer play error: ' + e.message);
+                stopCurrentAudio();
+                if (callback) callback();
+            });
+        } catch (e) {
+            debugLog('Error creating announcer audio: ' + e.message);
+            if (callback) callback();
+        }
+    } else {
+        debugLog('Announcer sound not found for ID: ' + soundId);
+        if (callback) callback();
+    }
+}
+
+// Function to play multiple announcer sounds in sequence
+    function playAnnouncerSoundsSequence(soundKeys, callback) {
+        if (soundKeys.length === 0) {
+            if (callback) callback();
+            return;
+    }
+
+        var currentIndex = 0;
+
+        function playNext() {
+            if (currentIndex >= soundKeys.length) {
+                if (callback) callback();
+                return;
+            }
+
+            var soundKey = soundKeys[currentIndex];
+            currentIndex++;
+
+            playAnnouncerSound(soundKey, function() {
+            // Small delay between announcer sounds
+                setTimeout(playNext, 100);
+            });
+        }
+
+        playNext();
+}
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', function() {
+        debugLog('App initialized');
+        gameState.playerStats = {};
+        initializePlayerSlots();
+        updateSoundsStats();
+        debugLog('Football Match Tracker ready');
+    });
+
+    debugLog('JavaScript loaded successfully');
+</script>
+</body>
+</html>
