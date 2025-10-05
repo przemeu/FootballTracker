@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -57,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "FootballTrackerPrefs";
     private static final String PREF_SOUNDS = "saved_sounds";
     private static final String PREF_ASSIGNMENTS = "sound_assignments";
+    private static final String PREF_PLAYER_ASSIGNMENTS = "player_assignments";
+    private static final String PREF_GAME_STATE = "game_state_backup";
     private SharedPreferences sharedPreferences;
 
     @Override
@@ -108,8 +111,9 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 Log.d(TAG, "WebView page finished loading");
 
-                // Auto-load saved sounds after page loads
+                // Auto-load saved sounds and player assignments after page loads
                 loadSavedSoundsToWebView();
+                loadSavedPlayerAssignmentsToWebView();
             }
         });
 
@@ -170,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
                 "• Save match reports to Downloads folder\n\n" +
                 "🔒 Privacy: We only access files you specifically choose.";
 
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.DarkBlueDialogTheme)
                 .setTitle("🔐 Permissions Required")
                 .setMessage(message)
                 .setPositiveButton("Grant Permissions", (dialog, which) -> {
@@ -232,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showPermissionDeniedDialog() {
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.DarkBlueDialogTheme)
                 .setTitle("⚠️ Permissions Required")
                 .setMessage("Some permissions were not granted.\n\n" +
                         "For full functionality:\n" +
@@ -395,7 +399,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "Sounds saved to SharedPreferences: " + success);
 
             if (success) {
-                runOnUiThread(() -> Toast.makeText(this, "💾 Sounds saved successfully!", Toast.LENGTH_SHORT).show());
+                // runOnUiThread(() -> Toast.makeText(this, "💾 Sounds saved successfully!", Toast.LENGTH_SHORT).show());
             } else {
                 runOnUiThread(() -> Toast.makeText(this, "❌ Error saving sounds", Toast.LENGTH_SHORT).show());
             }
@@ -460,6 +464,61 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Save player assignments to SharedPreferences
+    private void savePlayerAssignmentsToStorage(String assignmentsJson) {
+        try {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(PREF_PLAYER_ASSIGNMENTS, assignmentsJson);
+            boolean success = editor.commit();
+
+            Log.d(TAG, "Player assignments saved to SharedPreferences: " + success);
+
+            if (success) {
+                // runOnUiThread(() -> Toast.makeText(this, "💾 Player assignments saved!", Toast.LENGTH_SHORT).show());
+            } else {
+                runOnUiThread(() -> Toast.makeText(this, "❌ Error saving player assignments", Toast.LENGTH_SHORT).show());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error saving player assignments to SharedPreferences", e);
+            runOnUiThread(() -> Toast.makeText(this, "❌ Error saving player assignments: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        }
+    }
+
+    // Load player assignments from SharedPreferences
+    private void loadSavedPlayerAssignmentsToWebView() {
+        try {
+            String assignmentsJson = sharedPreferences.getString(PREF_PLAYER_ASSIGNMENTS, "");
+
+            if (!assignmentsJson.isEmpty()) {
+                Log.d(TAG, "Loading saved player assignments to WebView");
+
+                String jsCode = String.format(
+                        "try { " +
+                                "if (typeof loadPlayerAssignmentsFromAndroid === 'function') { " +
+                                "loadPlayerAssignmentsFromAndroid('%s'); " +
+                                "console.log('Player assignments loaded from Android storage'); " +
+                                "} else { " +
+                                "console.error('loadPlayerAssignmentsFromAndroid function not found'); " +
+                                "} " +
+                                "} catch(e) { " +
+                                "console.error('Error loading player assignments:', e); " +
+                                "}",
+                        assignmentsJson.replace("'", "\\'")
+                );
+
+                runOnUiThread(() -> {
+                    webView.evaluateJavascript(jsCode, result -> {
+                        Log.d(TAG, "Load player assignments JavaScript result: " + result);
+                    });
+                });
+            } else {
+                Log.d(TAG, "No saved player assignments found");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading player assignments from SharedPreferences", e);
+        }
+    }
+
     // Get storage info - RENAMED to avoid confusion
     private void showStorageInfoDialog() {
         try {
@@ -507,7 +566,7 @@ public class MainActivity extends AppCompatActivity {
             );
 
             runOnUiThread(() -> {
-                new AlertDialog.Builder(this)
+                new AlertDialog.Builder(this, R.style.DarkBlueDialogTheme)
                         .setTitle("📊 Storage Information")
                         .setMessage(info)
                         .setPositiveButton("OK", null)
@@ -521,6 +580,62 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (webView != null) {
+            // Request current game state from WebView before saving
+            requestGameStateBackup();
+            webView.saveState(outState);
+        }
+        Log.d(TAG, "Activity state saved");
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (webView != null && savedInstanceState != null) {
+            webView.restoreState(savedInstanceState);
+            // Restore game state after WebView is ready
+            webView.postDelayed(this::restoreGameStateFromBackup, 1000);
+        }
+        Log.d(TAG, "Activity state restored");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (webView != null) {
+            requestGameStateBackup();
+            webView.onPause();
+        }
+        Log.d(TAG, "Activity paused - requesting state backup");
+        
+        // Test if interface is still working when we pause
+        testJavaScriptInterface();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (webView != null) {
+            webView.onResume();
+            // Restore state after resume in case of Bluetooth interruption
+            webView.postDelayed(this::restoreGameStateFromBackup, 500);
+            // Test and reinitialize JavaScript interface if needed
+            webView.postDelayed(this::testJavaScriptInterface, 1000);
+        }
+        Log.d(TAG, "Activity resumed - attempting state restoration");
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        Log.d(TAG, "Configuration changed - preventing activity restart");
+        // This method prevents the activity from being recreated due to configuration changes
+        // including Bluetooth connection/disconnection events
+    }
+
+    @Override
     public void onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack();
@@ -528,6 +643,45 @@ public class MainActivity extends AppCompatActivity {
             super.onBackPressed();
         }
     }
+
+    // Request game state backup from WebView
+    private void requestGameStateBackup() {
+        if (webView != null) {
+            String jsCode = "try { if (typeof saveGameState === 'function') { saveGameState(); } } catch(e) { console.error('Error backing up state:', e); }";
+            webView.evaluateJavascript(jsCode, null);
+            Log.d(TAG, "Requested game state backup from WebView");
+        }
+    }
+
+    // Restore game state from backup
+    private void restoreGameStateFromBackup() {
+        if (webView != null) {
+            String jsCode = "try { if (typeof restoreGameState === 'function') { var restored = restoreGameState(); if (restored) { console.log('Game state restored successfully'); } } } catch(e) { console.error('Error restoring state:', e); }";
+            webView.evaluateJavascript(jsCode, null);
+            Log.d(TAG, "Attempted to restore game state in WebView");
+        }
+    }
+
+    // Test JavaScript interface connectivity
+    private void testJavaScriptInterface() {
+        if (webView != null) {
+            String jsCode = "try { " +
+                    "console.log('Testing JavaScript interface...'); " +
+                    "if (typeof window.AndroidInterface !== 'undefined') { " +
+                    "console.log('AndroidInterface is available'); " +
+                    "window.AndroidInterface.logMessage('JavaScript interface test from onResume'); " +
+                    "} else { " +
+                    "console.error('AndroidInterface is not available!'); " +
+                    "} " +
+                    "} catch(e) { " +
+                    "console.error('Error testing JavaScript interface:', e); " +
+                    "}";
+            webView.evaluateJavascript(jsCode, result -> {
+                Log.d(TAG, "JavaScript interface test completed: " + result);
+            });
+        }
+    }
+
 
     // JavaScript Interface
     public class AndroidInterface {
@@ -544,7 +698,7 @@ public class MainActivity extends AppCompatActivity {
             if (!hasAudioPermission()) {
                 Log.w(TAG, "Audio permission not granted");
                 runOnUiThread(() -> {
-                    new AlertDialog.Builder(context)
+                    new AlertDialog.Builder(context, R.style.DarkBlueDialogTheme)
                             .setTitle("🔐 Permission Required")
                             .setMessage("Audio permission is needed to browse and select sound files.\n\nWould you like to grant permission now?")
                             .setPositiveButton("Grant Permission", (dialog, which) -> {
@@ -583,17 +737,21 @@ public class MainActivity extends AppCompatActivity {
 
         @JavascriptInterface
         public void saveMatchReport(String reportContent, String filename) {
-            Log.d(TAG, "Saving match report: " + filename);
+            Log.d(TAG, "saveMatchReport() called with filename: " + filename);
+            Log.d(TAG, "Report content length: " + (reportContent != null ? reportContent.length() : "null"));
 
             runOnUiThread(() -> {
                 try {
+                    Log.d(TAG, "Starting saveReportToDownloads...");
                     saveReportToDownloads(reportContent, filename);
+                    Log.d(TAG, "saveReportToDownloads completed");
                 } catch (Exception e) {
-                    Log.e(TAG, "Error saving report", e);
+                    Log.e(TAG, "Error in saveMatchReport", e);
                     Toast.makeText(context, "❌ Error saving report: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 }
             });
         }
+
 
         @JavascriptInterface
         public void showToast(String message) {
@@ -606,6 +764,14 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void logMessage(String message) {
             Log.d(TAG, "JS: " + message);
+        }
+
+        @JavascriptInterface
+        public void testInterface() {
+            Log.d(TAG, "testInterface() called from JavaScript");
+            runOnUiThread(() -> {
+                Toast.makeText(context, "✅ Android Interface is working!", Toast.LENGTH_SHORT).show();
+            });
         }
 
         @JavascriptInterface
@@ -652,6 +818,20 @@ public class MainActivity extends AppCompatActivity {
             loadSavedSoundsToWebView();
         }
 
+        // Save player assignments to Android storage
+        @JavascriptInterface
+        public void savePlayerAssignments(String assignmentsJson) {
+            Log.d(TAG, "Saving player assignments to Android storage");
+            savePlayerAssignmentsToStorage(assignmentsJson);
+        }
+
+        // Load player assignments from Android storage
+        @JavascriptInterface
+        public void loadPlayerAssignments() {
+            Log.d(TAG, "Loading player assignments from Android storage");
+            loadSavedPlayerAssignmentsToWebView();
+        }
+
         @JavascriptInterface
         public void clearAllSoundFiles(String[] uriStrings) {
             ContentResolver resolver = getApplicationContext().getContentResolver();
@@ -678,9 +858,50 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "Getting storage information");
             showStorageInfoDialog();
         }
+
+        // Backup game state to prevent loss during Bluetooth events
+        @JavascriptInterface
+        public void backupGameState(String gameStateJson) {
+            try {
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(PREF_GAME_STATE, gameStateJson);
+                editor.putLong(PREF_GAME_STATE + "_timestamp", System.currentTimeMillis());
+                boolean success = editor.commit();
+                Log.d(TAG, "Game state backed up to Android storage: " + success);
+            } catch (Exception e) {
+                Log.e(TAG, "Error backing up game state", e);
+            }
+        }
+
+        // Restore game state after potential Bluetooth interruption
+        @JavascriptInterface
+        public String restoreGameState() {
+            try {
+                String gameStateJson = sharedPreferences.getString(PREF_GAME_STATE, "");
+                long timestamp = sharedPreferences.getLong(PREF_GAME_STATE + "_timestamp", 0);
+                
+                // Only restore if backed up within last 60 seconds (Bluetooth event window)
+                if (!gameStateJson.isEmpty() && (System.currentTimeMillis() - timestamp) < 60000) {
+                    Log.d(TAG, "Restoring game state from Android storage");
+                    return gameStateJson;
+                } else {
+                    // Clear old backup
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.remove(PREF_GAME_STATE);
+                    editor.remove(PREF_GAME_STATE + "_timestamp");
+                    editor.apply();
+                    Log.d(TAG, "No valid game state backup found");
+                    return "";
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error restoring game state", e);
+                return "";
+            }
+        }
     }
 
     private void saveReportToDownloads(String content, String filename) {
+        Uri savedUri = null;
         try {
             ContentResolver resolver = getContentResolver();
             ContentValues contentValues = new ContentValues();
@@ -691,16 +912,27 @@ public class MainActivity extends AppCompatActivity {
                 contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
             }
 
-            Uri uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues);
+            savedUri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues);
+            Log.d(TAG, "Created URI for file: " + savedUri);
 
-            if (uri != null) {
-                try (OutputStream outputStream = resolver.openOutputStream(uri)) {
+            if (savedUri != null) {
+                try (OutputStream outputStream = resolver.openOutputStream(savedUri)) {
                     if (outputStream != null) {
                         outputStream.write(content.getBytes());
                         outputStream.flush();
 
-                        Log.d(TAG, "Report saved successfully: " + filename);
-                        Toast.makeText(this, "✅ Report saved to Downloads: " + filename, Toast.LENGTH_LONG).show();
+                        Log.d(TAG, "Report saved successfully: " + filename + " at URI: " + savedUri);
+                        
+                        // Create a final reference for the dialog
+                        final Uri finalUri = savedUri;
+                        runOnUiThread(() -> {
+                            try {
+                                showReportSavedDialog(finalUri, filename);
+                            } catch (Exception dialogError) {
+                                Log.e(TAG, "Error showing dialog", dialogError);
+                                Toast.makeText(this, "✅ Report saved to Downloads: " + filename, Toast.LENGTH_LONG).show();
+                            }
+                        });
                     } else {
                         throw new Exception("Cannot write to file");
                     }
@@ -710,7 +942,61 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             Log.e(TAG, "Error saving report", e);
-            Toast.makeText(this, "❌ Error saving report. Check app permissions in Settings.", Toast.LENGTH_LONG).show();
+            runOnUiThread(() -> {
+                Toast.makeText(this, "❌ Error saving report. Check app permissions in Settings.", Toast.LENGTH_LONG).show();
+            });
         }
     }
+
+    private void showReportSavedDialog(Uri fileUri, String filename) {
+        Log.d(TAG, "Showing report saved dialog for: " + filename + " with URI: " + fileUri);
+        
+        if (fileUri == null) {
+            Log.e(TAG, "File URI is null, cannot show dialog properly");
+            Toast.makeText(this, "✅ Report saved to Downloads: " + filename, Toast.LENGTH_LONG).show();
+            return;
+        }
+        
+        try {
+            AlertDialog dialog = new AlertDialog.Builder(this, R.style.DarkBlueDialogTheme)
+                    .setTitle("📄 Match Report Saved")
+                    .setMessage("Report saved successfully to Downloads folder:\n\n" + filename + "\n\nYou can find this file in your device's Downloads folder.")
+                    .setPositiveButton("✅ OK", (d, which) -> {
+                        Log.d(TAG, "User clicked OK");
+                    })
+                    .create();
+            
+            // Apply dark blue theme colors programmatically
+            dialog.setOnShowListener(d -> {
+                try {
+                    // Set button colors
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(0xFF6366F1); // Blue accent
+                    
+                    // Set title and message text colors for better readability
+                    android.widget.TextView titleView = dialog.findViewById(android.R.id.title);
+                    if (titleView != null) {
+                        titleView.setTextColor(0xFFF8FAFC); // Very light text
+                    }
+                    
+                    android.widget.TextView messageView = dialog.findViewById(android.R.id.message);
+                    if (messageView != null) {
+                        messageView.setTextColor(0xFFE2E8F0); // Light gray text
+                    }
+                } catch (Exception colorError) {
+                    Log.w(TAG, "Could not set dialog colors: " + colorError.getMessage());
+                }
+            });
+            
+            dialog.show();
+            Log.d(TAG, "Dialog shown successfully");
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error creating/showing dialog: " + e.getMessage(), e);
+            Toast.makeText(this, "✅ Report saved to Downloads: " + filename, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    // Removed openFile method since we're not using file viewing anymore
+
+    // Removed openDownloadsFolder method since we're not using it anymore
 }

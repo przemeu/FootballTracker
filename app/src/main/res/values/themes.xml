@@ -6,4 +6,17 @@
     </style>
 
     <style name="Theme.FootballTracker" parent="Base.Theme.FootballTracker" />
+
+    <!-- Dark Blue Dialog Theme -->
+    <style name="DarkBlueDialogTheme" parent="Theme.Material3.DayNight.Dialog.Alert">
+        <item name="colorPrimary">#6366F1</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSurface">#1E293B</item>
+        <item name="colorOnSurface">#F8FAFC</item>
+        <item name="colorOnSurfaceVariant">#E2E8F0</item>
+        <item name="android:textColorPrimary">#F8FAFC</item>
+        <item name="android:textColorSecondary">#E2E8F0</item>
+        <item name="android:backgroundDimAmount">0.6</item>
+        <item name="android:windowBackground">@drawable/dialog_background</item>
+    </style>
 </resources>
